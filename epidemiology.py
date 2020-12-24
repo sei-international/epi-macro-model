@@ -139,7 +139,7 @@ recovered_over_time = np.zeros(end_time - start_time + 1)
 recovered_over_time[0] = 0
 
 
-for i in range(start_time, end_time):
+for i in range(start_time, end_time, time_step):
 
 	#Epidemiology controls
     social_distancing_window = ramp(i, 1 / social_distancing_ramp_time, social_distancing_start,social_distancing_start + social_distancing_ramp_time) * (1 - step(i, 1, social_distancing_end))
