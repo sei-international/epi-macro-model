@@ -20,3 +20,28 @@ initial:
     population at risk fraction: 0.05 # As a fraction of total population
     infected fraction: 0.00 # As a fraction of total population
 
+###############################################################
+#
+# Public health measures
+#
+###############################################################
+avoid elective operations: 1
+isolate_visible_cases: 0
+
+isolate cases:
+    apply to visible cases: false
+    apply to infectious cases: false
+    fraction of infectious cases identified: 0.9
+    start at: 120
+    ramp up for: 31
+    end at: 600
+    ramp down for: 0
+
+social distance:
+    apply: true
+    effectiveness: 0.75
+    start at: 120
+    ramp up for: 31
+    end at: 600
+    ramp down for: 0
+    

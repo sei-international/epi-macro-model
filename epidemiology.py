@@ -16,6 +16,26 @@ def ramp(time,slope,start_time,end_time):
     else:
         return 0
 
+class Window:
+    def __init__(self, start, end, ramp_up, ramp_down):
+        self.start = start
+        self.end = end
+        self.ramp_up = ramp_up
+        self.ramp_down = ramp_down
+    
+    # Ramp to a maximum value of 1.0 and then back down
+    # Ramp time can be zero
+    def window(self, time):
+        if time < self.start or time > self.end:
+            return 0
+        elif time >= self.start + self.ramp_up and time <= self.end - self.ramp_down:
+            return 1
+        elif time < self.start + self.ramp_up:
+            return (time - self.start)/self.ramp_up
+        else:
+            return (self.end - time)/self.ramp_down
+    
+
 def step(time, sheight, stime):
     if(time <  stime):
         return 0
@@ -41,13 +61,10 @@ initial_beds_per_1000 = common_params['initial']['beds per 1000']
 initial_population_at_risk_frac = common_params['initial']['population at risk fraction']
 initial_infected_fraction = common_params['initial']['infected fraction']
 
-
 R0= 2.25
 case_fatality_rate= 0.057
 case_fatality_rate_at_risk = 0.07
 mean_infectious_period=16
-social_distancing_ramp_time = 31
-isolate_cases_ramp_time = 31
 
 coeff_of_variation_i= 0.3
 invisible_fraction = 0.87
@@ -60,30 +77,37 @@ rd_I_r = np.array(seir_params['rd_I_r'])
 infected_E = np.array(seir_params['infected_E'])
 exposed_time_period = len(infected_E)
 
-I = np.zeros(infective_time_period + 1)
-E = np.zeros(exposed_time_period + 1)
-I_r = np.zeros(infective_time_period + 1)
 
 
-avoid_elective_operations= 1
+avoid_elective_operations= common_params['avoid elective operations']
 
-isolate_cases_start = 120
-isolate_cases_end=600
-isolate_infectious_cases_extent= 0.9
-isolate_infectious_cases= 0
-isolate_visible_cases= 0
+isolate_cases_window = Window(common_params['isolate cases']['start at'],
+                              common_params['isolate cases']['end at'],
+                              common_params['isolate cases']['ramp up for'],
+                              common_params['isolate cases']['ramp down for'])
 
-social_distancing_start = 120
-social_distancing_end=600
-social_distancing = 1
-social_distancing_extent = 0.75
+social_distancing_window = Window(common_params['social distance']['start at'],
+                                  common_params['social distance']['end at'],
+                                  common_params['social distance']['ramp up for'],
+                                  common_params['social distance']['ramp down for'])
 
 max_reduction_in_normal_bed_occupancy= 0.33
 normal_bed_occupancy_fraction = 0.64
 
 overflow_hospitalized_mortality_rate_factor = 2
 
-endogenize_bed_expansion= 0
+###############################################################
+#
+# Initialize model values
+#
+#  E: exposed population at different durations
+#  I: 
+#
+###############################################################
+
+E = np.zeros(exposed_time_period + 1)
+I = np.zeros(infective_time_period + 1)
+I_r = np.zeros(infective_time_period + 1)
 
 E[1] = initial_exposed
 
@@ -142,26 +166,31 @@ infected_fraction = initial_infected_fraction
 
 for i in range(start_time, end_time, time_step):
 
-	#Epidemiology controls
-    social_distancing_window = ramp(i, 1 / social_distancing_ramp_time, social_distancing_start,social_distancing_start + social_distancing_ramp_time) * (1 - step(i, 1, social_distancing_end))
-
-    isolate_cases_window = ramp(i, 1 / isolate_cases_ramp_time, isolate_cases_start,isolate_cases_start + isolate_cases_ramp_time) * (1 - step(i, 1, isolate_cases_end))
-
-    PHA_social_distancing = social_distancing_window * social_distancing * social_distancing_extent
-
-    PHA_isolate_cases = isolate_cases_window * max(isolate_visible_cases * (1 - invisible_fraction), isolate_infectious_cases * isolate_infectious_cases_extent)
-
+	# Public health measures
+    if common_params['social distance']['apply']:
+        PHA_social_distancing = common_params['social distance']['effectiveness'] * social_distancing_window.window(i)
+    else:
+        PHA_social_distancing = 0
+    if common_params['isolate cases']['apply to visible cases']:
+        PHA_isolate_visible_cases = (1 - invisible_fraction) * isolate_cases_window.window(i)
+    else:
+        PHA_isolate_visible_cases = 0
+    if common_params['isolate cases']['apply to infectious cases']:
+        PHA_isolate_infectious_cases = common_params['isolate cases']['fraction of infectious cases identified'] * isolate_cases_window.window(i)
+    else:
+        PHA_isolate_infectious_cases = 0
+    PHA_isolate_cases = max(PHA_isolate_visible_cases, PHA_isolate_infectious_cases)
     public_health_adjustment = (1 - PHA_social_distancing) * (1 - PHA_isolate_cases)
-
+    
+    
+    
     base_individual_exposure_rate = R0/mean_infectious_period
 
     individual_exposure = public_health_adjustment * base_individual_exposure_rate
 
-    deaths_per_1000 = 1000 * deaths/initial_population
-
     #Beds and Mortality
 
-    bed_occupancy_fraction = (1 - avoid_elective_operations * social_distancing_window * max_reduction_in_normal_bed_occupancy) * normal_bed_occupancy_fraction
+    bed_occupancy_fraction = (1 - avoid_elective_operations * social_distancing_window.window(i) * max_reduction_in_normal_bed_occupancy) * normal_bed_occupancy_fraction
 
     hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / fraction_of_visible_requiring_hospitalization
 
@@ -178,17 +207,17 @@ for i in range(start_time, end_time, time_step):
     individual_exposure_rate = public_health_adjustment * base_individual_exposure_rate
     social_exposure_rate = individual_exposure_rate * (Itot_lagged/N_lagged) * (1 - coeff_of_variation_i**2 * Itot_lagged/S_lagged)
 
-    RD = I[32]
-    RD_r = I_r[32]
+    RD = I[infective_time_period]
+    RD_r = I_r[infective_time_period]
 
-    for j in range(32,1,-1):
+    for j in range(infective_time_period,1,-1):
         I[j] = (1 - rd_I[j-1]) * I[j-1]
         I_r[j] = (1 - rd_I_r[j-1]) * I[j-1]
         RD = RD + rd_I[j-1]*I[j-1]
         RD_r = RD_r + rd_I_r[j-1]*I_r[j-1]
-    I[1] = E[12]
-    I_r[1] = E[12] * initial_population_at_risk_frac
-    for j in range(12, 1, -1):
+    I[1] = E[exposed_time_period]
+    I_r[1] = E[exposed_time_period] * initial_population_at_risk_frac
+    for j in range(exposed_time_period, 1, -1):
         E[j] = (1 - infected_E[j - 1]) * E[j - 1]
         I[1] = I[1] + infected_E[j - 1] * E[j - 1]
         I_r[1] = I[1] + infected_E[j-1] * E[j - 1] * initial_population_at_risk_frac
@@ -215,6 +244,7 @@ for i in range(start_time, end_time, time_step):
     infective_over_time[i] = infective
     deaths_over_time[i] = deaths
     recovered_over_time[i] = recovered_pool
+    
 print('SUSCEPTIBLE\n')
 #print(susceptible_over_time)
 plt.plot(susceptible_over_time[start_time:end_time] )
