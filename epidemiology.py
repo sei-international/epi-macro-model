@@ -39,16 +39,31 @@ initial_population= common_params['initial']['total population']
 initial_exposed = common_params['initial']['exposed population']
 initial_beds_per_1000 = common_params['initial']['beds per 1000']
 initial_population_at_risk_frac = common_params['initial']['population at risk fraction']
+initial_infected_fraction = common_params['initial']['infected fraction']
 
-exposed_time_period = 12
-infective_time_period = 32
-infected_fraction = 0
+
 R0= 2.25
 case_fatality_rate= 0.057
 case_fatality_rate_at_risk = 0.07
 mean_infectious_period=16
 social_distancing_ramp_time = 31
 isolate_cases_ramp_time = 31
+
+coeff_of_variation_i= 0.3
+invisible_fraction = 0.87
+fraction_of_visible_requiring_hospitalization = 0.38
+fraction_of_visible_requiring_hospitalization_at_risk = 0.6
+
+rd_I = np.array(seir_params['rd_I'])
+infective_time_period = len(rd_I)
+rd_I_r = np.array(seir_params['rd_I_r'])
+infected_E = np.array(seir_params['infected_E'])
+exposed_time_period = len(infected_E)
+
+I = np.zeros(infective_time_period + 1)
+E = np.zeros(exposed_time_period + 1)
+I_r = np.zeros(infective_time_period + 1)
+
 
 avoid_elective_operations= 1
 
@@ -70,21 +85,7 @@ overflow_hospitalized_mortality_rate_factor = 2
 
 endogenize_bed_expansion= 0
 
-coeff_of_variation_i= 0.3
-invisible_fraction = 0.87
-fraction_of_visible_requiring_hospitalization = 0.38
-fraction_of_visible_requiring_hospitalization_at_risk = 0.6
-rd_I = np.zeros(infective_time_period)
-rd_I_r = np.zeros(infective_time_period)
-rd_I = common_params['rd_I']
-rd_I_r = common_params['rd_I_r']
-infected_E = np.zeros(exposed_time_period)
-infected_E = common_params['infected_E']
-I = np.zeros(infective_time_period + 1)
-E = np.zeros(exposed_time_period + 1)
-I_r = np.zeros(infective_time_period + 1)
 E[1] = initial_exposed
-coeff_of_variation_i= 0.3
 
 
 baseline_hospitalized_mortality_rate = case_fatality_rate / fraction_of_visible_requiring_hospitalization
@@ -136,6 +137,7 @@ deaths_over_time = np.zeros(end_time - start_time + 1)
 deaths_over_time[0] = 0
 recovered_over_time = np.zeros(end_time - start_time + 1)
 recovered_over_time[0] = 0
+infected_fraction = initial_infected_fraction
 
 
 for i in range(start_time, end_time, time_step):
