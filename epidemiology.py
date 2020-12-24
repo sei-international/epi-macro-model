@@ -25,18 +25,20 @@ def step(time, sheight, stime):
 def INTEG(a,b):
 	return b + a
 
-with open(r'input.yaml') as file:
-    parameters = yaml.full_load(file)
+with open(r'common_params.yaml') as file:
+    common_params = yaml.full_load(file)
 
+with open(r'seir_params.yaml') as file:
+    seir_params = yaml.full_load(file)
 
-start_time = parameters['time']['start']
-end_time = parameters['time']['end']
-time_step = parameters['time']['step']
+start_time = common_params['time']['start']
+end_time = common_params['time']['end']
+time_step = common_params['time']['step']
 
-initial_population= parameters['initial']['total population']
-initial_exposed = parameters['initial']['exposed population']
-initial_beds_per_1000 = parameters['initial']['beds per 1000']
-initial_population_at_risk_frac = parameters['initial']['population at risk fraction']
+initial_population= common_params['initial']['total population']
+initial_exposed = common_params['initial']['exposed population']
+initial_beds_per_1000 = common_params['initial']['beds per 1000']
+initial_population_at_risk_frac = common_params['initial']['population at risk fraction']
 
 exposed_time_period = 12
 infective_time_period = 32
@@ -47,10 +49,7 @@ case_fatality_rate_at_risk = 0.07
 mean_infectious_period=16
 social_distancing_ramp_time = 31
 isolate_cases_ramp_time = 31
-baseline_hospital_expenditure_as_share_of_wages= 0.1
-unemployment_coverage_fraction= 1
-producer_taxes_as_share_of_initial_profits= 0.114203
-hospital_covid_cost_recovery_rate= 0.25
+
 avoid_elective_operations= 1
 
 isolate_cases_start = 120
@@ -77,10 +76,10 @@ fraction_of_visible_requiring_hospitalization = 0.38
 fraction_of_visible_requiring_hospitalization_at_risk = 0.6
 rd_I = np.zeros(infective_time_period)
 rd_I_r = np.zeros(infective_time_period)
-rd_I = parameters['rd_I']
-rd_I_r = parameters['rd_I_r']
+rd_I = common_params['rd_I']
+rd_I_r = common_params['rd_I_r']
 infected_E = np.zeros(exposed_time_period)
-infected_E = parameters['infected_E']
+infected_E = common_params['infected_E']
 I = np.zeros(infective_time_period + 1)
 E = np.zeros(exposed_time_period + 1)
 I_r = np.zeros(infective_time_period + 1)
