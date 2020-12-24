@@ -4,6 +4,8 @@ import math
 import matplotlib.pyplot as plt
 import yaml
 
+eps = 1.0e-9
+
 
 def ramp(time,slope,start_time,end_time):
     if(time > start_time):
@@ -19,12 +21,6 @@ def step(time, sheight, stime):
         return 0
     else:
         return sheight
-
-def XIDZ(a,b,x):
-	if b == 0:
-		return x
-	else:
-		return a/b
 
 def INTEG(a,b):
 	return b + a
@@ -168,7 +164,7 @@ for i in range(start_time, end_time):
 
     hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / fraction_of_visible_requiring_hospitalization
 
-    hospital_z_i = (1 / coeff_of_variation_i) * (XIDZ(hospital_p_i_threshold, infected_fraction, 1e+09) - 1)
+    hospital_z_i = (1 / coeff_of_variation_i) * (hospital_p_i_threshold/(infected_fraction + eps) - 1)
 
     mean_exceedance_per_infected_fraction = coeff_of_variation_i * (-hospital_z_i * (1 - st.norm.cdf(hospital_z_i)) + math.exp(-0.5 * hospital_z_i ** 2) / math.sqrt(2 * 3.14159))
 
