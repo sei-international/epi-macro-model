@@ -7,6 +7,18 @@ time:
     start: 0
     end: 548
     step: 1
+    
+###############################################################
+#
+# Initial values
+#
+###############################################################
+initial:
+    total population: 3.27e+08
+    exposed population: 5000
+    beds per 1000: 2.4
+    population at risk fraction: 0.05 # As a fraction of total population
+
 
 rd_I:
   - 0

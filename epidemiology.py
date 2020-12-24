@@ -36,69 +36,49 @@ with open(r'input.yaml') as file:
 start_time = parameters['time']['start']
 end_time = parameters['time']['end']
 time_step = parameters['time']['step']
+
+initial_population= parameters['initial']['total population']
+initial_exposed = parameters['initial']['exposed population']
+initial_beds_per_1000 = parameters['initial']['beds per 1000']
+initial_population_at_risk_frac = parameters['initial']['population at risk fraction']
+
 exposed_time_period = 12
 infective_time_period = 32
 infected_fraction = 0
+R0= 2.25
+case_fatality_rate= 0.057
+case_fatality_rate_at_risk = 0.07
+mean_infectious_period=16
 social_distancing_ramp_time = 31
 isolate_cases_ramp_time = 31
-initial_govt_deficit_as_share_of_Gc0= 0.480282
-initial_population= 3.27e+08
-initial_population_at_risk_percentage = 0.05
 baseline_hospital_expenditure_as_share_of_wages= 0.1
 unemployment_coverage_fraction= 1
 producer_taxes_as_share_of_initial_profits= 0.114203
 hospital_covid_cost_recovery_rate= 0.25
 avoid_elective_operations= 1
-omega_c = 0.48
-omega_s = 0.7
-omega_h = 0.81
-sales_tax_rate_c = 0.056
-sales_tax_rate_s = 0.06
-prod_tax_rate_c= 0.039
-prod_tax_rate_h= 0.019
-prod_tax_rate_s= 0.025
-Gc0 = 1.622e+06/365
-import_fraction = 0.042
-govt_payroll_multiplier = 1.24
-wage_tax_rate = 0.277
-initial_exposed = 5000
-economic_impact_of_social_distancing= 0.5
+
 isolate_cases_start = 120
 isolate_cases_end=600
 isolate_infectious_cases_extent= 0.9
 isolate_infectious_cases= 0
 isolate_visible_cases= 0
-marginal_consumption_fraction_cc= 0.6
+
 social_distancing_start = 120
 social_distancing_end=600
 social_distancing = 1
 social_distancing_extent = 0.75
-R0= 2.25
-case_fatality_rate= 0.057
-case_fatality_rate_at_risk = 0.07
-mean_infectious_period=16
-capital_productivity = 0.357
-default_fraction = 0.1
-investment_utilization_response = 0.025
+
 max_reduction_in_normal_bed_occupancy= 0.33
 normal_bed_occupancy_fraction = 0.64
-normal_utilization = 0.85
+
 overflow_hospitalized_mortality_rate_factor = 2
-participation_rate = 0.63
-tech_coeff_ac = 0.428
-tech_coeff_ah = 0.335
-tech_coeff_as= 0.395
+
+endogenize_bed_expansion= 0
+
 coeff_of_variation_i= 0.3
-working_age_fraction = 0.63
 invisible_fraction = 0.87
 fraction_of_visible_requiring_hospitalization = 0.38
 fraction_of_visible_requiring_hospitalization_at_risk = 0.6
-max_investment_rate_boost = 0.25
-base_net_investment_rate = 0.02
-initial_beds_per_1000 = 2.4
-endogenize_bed_expansion= 0
-depreciation_rate = 0.05
-initial_average_wage_share= 0.639197
 rd_I = np.zeros(infective_time_period)
 rd_I_r = np.zeros(infective_time_period)
 rd_I = parameters['rd_I']
@@ -109,13 +89,8 @@ I = np.zeros(infective_time_period + 1)
 E = np.zeros(exposed_time_period + 1)
 I_r = np.zeros(infective_time_period + 1)
 E[1] = initial_exposed
-GDP0 = 1.72665e+07/365
 coeff_of_variation_i= 0.3
 
-
-initial_wage_bill= initial_average_wage_share * GDP0
-
-Xh0 = baseline_hospital_expenditure_as_share_of_wages * (1 - wage_tax_rate) * initial_wage_bill
 
 baseline_hospitalized_mortality_rate = case_fatality_rate / fraction_of_visible_requiring_hospitalization
 baseline_hospitalized_mortality_rate_at_risk = case_fatality_rate_at_risk / fraction_of_visible_requiring_hospitalization_at_risk
@@ -126,7 +101,7 @@ cumulative_cases = 0
 
 N = initial_population
 
-N_r = initial_population * initial_population_at_risk_percentage
+N_r = initial_population * initial_population_at_risk_frac
 
 recovered_pool = 0
 
@@ -152,7 +127,7 @@ RD_r = 0
 
 infective = 0
 
-exposed_at_risk = initial_exposed * initial_population_at_risk_percentage
+exposed_at_risk = initial_exposed * initial_population_at_risk_frac
 
 exposed_no_risk = initial_exposed - (exposed_at_risk)
 
@@ -215,11 +190,11 @@ for i in range(start_time, end_time):
         RD = RD + rd_I[j-1]*I[j-1]
         RD_r = RD_r + rd_I_r[j-1]*I_r[j-1]
     I[1] = E[12]
-    I_r[1] = E[12] * initial_population_at_risk_percentage
+    I_r[1] = E[12] * initial_population_at_risk_frac
     for j in range(12, 1, -1):
         E[j] = (1 - infected_E[j - 1]) * E[j - 1]
         I[1] = I[1] + infected_E[j - 1] * E[j - 1]
-        I_r[1] = I[1] + infected_E[j-1] * E[j - 1] * initial_population_at_risk_percentage
+        I_r[1] = I[1] + infected_E[j-1] * E[j - 1] * initial_population_at_risk_frac
     E[1] = social_exposure_rate * susceptible_no_risk + social_exposure_rate * susceptible_at_risk
     Itot_lagged = infective
     infective = np.sum(I) + np.sum(I_r)
