@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import stats as st
-from scipy import special as sp
 import math
 import matplotlib.pyplot as plt
 import yaml
