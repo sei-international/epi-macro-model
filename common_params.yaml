@@ -17,6 +17,7 @@ initial:
     total population: 3.27e+08
     exposed population: 5000
     infected fraction: 0.00 # As a fraction of total population
+    population with community spread: 0.06 # As a fraction of total population
     
 
 ###############################################################
@@ -32,13 +33,23 @@ bed occupancy:
 
 ###############################################################
 #
+# Geographic information
+#
+###############################################################
+geography:
+    number of localities: 50
+    # Probability of an individual moving from one locality to another per time step
+    movement probability: 0.0033 # 40% of Americans travel "a few times a year", so: 40% * 3/365 = 0.0033
+
+###############################################################
+#
 # Public health measures
 #
 ###############################################################
 isolate_visible_cases: 0
 
 isolate cases:
-    apply to visible cases: false
+    apply to visible cases: true
     apply to infectious cases: false
     fraction of infectious cases identified: 0.9
     start at: 120

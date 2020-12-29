@@ -24,7 +24,7 @@ class Window:
 
 
 class SEIR_matrix:
-    def __init__(self, config_file, initial_values):
+    def __init__(self, config_file, initial_values, geog):
         
         self.eps = 1.0e-9
         
@@ -94,6 +94,10 @@ class SEIR_matrix:
         self.S_prev = self.S
         
         self.new_deaths = 0
+        
+        self.comm_spread_frac = initial_values['population with community spread']
+        self.p_move = geog['movement probability']
+        self.n_loc = geog['number of localities']
 
     def p_spread(self, num_inf, pub_health_factor):
         kn = self.k * num_inf
@@ -117,7 +121,11 @@ class SEIR_matrix:
             return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
 
     def social_exposure_rate(self, pub_health_factor):
-        return pub_health_factor * self.base_individual_exposure_rate * (self.Itot_prev/self.N_prev) * (1 - self.coeff_of_variation_i**2 * self.Itot_prev/self.S_prev)
+        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/self.comm_spread_frac
+        p_i = self.Itot_prev/self.N_prev
+        cv_corr = self.coeff_of_variation_i**2 * self.Itot_prev/self.S_prev
+        clust_corr = (1 - self.comm_spread_frac) * self.N_prev/self.S_prev
+        return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
 
     def update(self, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
         RD_nr = self.I_nr[self.infective_time_period]
@@ -148,4 +156,6 @@ class SEIR_matrix:
         self.N -= self.new_deaths
         self.recovered_pool = RD_nr + RD_r - self.new_deaths
         self.R += self.recovered_pool
+        ni_addl = self.p_move * self.Itot/self.n_loc
+        self.comm_spread_frac += (1 - self.comm_spread_frac) * self.p_spread(ni_addl, pub_health_factor)
         

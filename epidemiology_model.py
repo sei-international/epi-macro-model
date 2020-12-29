@@ -7,7 +7,7 @@ with open(r'common_params.yaml') as file:
     common_params = yaml.full_load(file)
 
 # Load epidemiological model object
-epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'])
+epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography'])
 
 start_time = common_params['time']['start']
 end_time = common_params['time']['end']
@@ -43,6 +43,8 @@ deaths_over_time[0] = 0
 recovered_over_time = np.zeros(end_time - start_time + 1)
 recovered_over_time[0] = 0
 initial_population = epi.N
+comm_spread_frac_over_time = np.zeros(end_time - start_time + 1)
+comm_spread_frac_over_time[0] = epi.comm_spread_frac
 
 for i in range(start_time, end_time, time_step):
 
@@ -82,6 +84,7 @@ for i in range(start_time, end_time, time_step):
     recovered_over_time[i] = epi.R
     new_visible_cases = (1 - epi.invisible_fraction) * (epi.I_nr[1] + epi.I_r[1])
     cumulative_cases += new_visible_cases
+    comm_spread_frac_over_time[i] = epi.comm_spread_frac
 
 plt.stackplot(range(start_time, end_time, time_step),
               susceptible_over_time[start_time:end_time],
@@ -93,6 +96,10 @@ plt.stackplot(range(start_time, end_time, time_step),
 plt.legend(loc='lower right')
 plt.show()
 
-plt.plot(1e-3 * deaths_over_time[start_time:end_time])
-plt.ylabel('cumulative deaths (thousands)')
+plt.plot(deaths_over_time[start_time:end_time])
+plt.ylabel('cumulative deaths')
+plt.show()
+
+plt.plot(comm_spread_frac_over_time[start_time:end_time])
+plt.ylabel('community spread')
 plt.show()
