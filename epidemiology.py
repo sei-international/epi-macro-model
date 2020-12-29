@@ -1,20 +1,11 @@
 import numpy as np
 from scipy import stats as st
+from scipy import special as sp
 import math
 import matplotlib.pyplot as plt
 import yaml
 
 eps = 1.0e-9
-
-
-def ramp(time,slope,start_time,end_time):
-    if(time > start_time):
-        if(time <  end_time):
-            return slope*(time - start_time)
-        else:
-            return slope*(end_time - start_time)
-    else:
-        return 0
 
 class Window:
     def __init__(self, start, end, ramp_up, ramp_down):
@@ -34,16 +25,6 @@ class Window:
             return (time - self.start)/self.ramp_up
         else:
             return (self.end - time)/self.ramp_down
-    
-
-def step(time, sheight, stime):
-    if(time <  stime):
-        return 0
-    else:
-        return sheight
-
-def INTEG(a,b):
-	return b + a
 
 with open(r'common_params.yaml') as file:
     common_params = yaml.full_load(file)
@@ -58,13 +39,13 @@ time_step = common_params['time']['step']
 initial_population= common_params['initial']['total population']
 initial_exposed = common_params['initial']['exposed population']
 initial_beds_per_1000 = common_params['initial']['beds per 1000']
-initial_population_at_risk_frac = common_params['initial']['population at risk fraction']
 initial_infected_fraction = common_params['initial']['infected fraction']
 
-R0= 2.25
-case_fatality_rate= 0.057
+R0 = 2.25
+k = 0.1
+case_fatality_rate = 0.057
 case_fatality_rate_at_risk = 0.07
-mean_infectious_period=16
+population_at_risk_frac = seir_params['population at risk fraction']
 
 coeff_of_variation_i= 0.3
 invisible_fraction = 0.87
@@ -77,6 +58,12 @@ rd_I_r = np.array(seir_params['rd_I_r'])
 infected_E = np.array(seir_params['infected_E'])
 exposed_time_period = len(infected_E)
 
+# Calculate the mean infectious period based on the matrix model
+mean_infectious_period = 0
+P = 1
+for i in range(1,infective_time_period):
+    mean_infectious_period += (i + 1) * P * rd_I[i - 1]
+    P *= 1 - rd_I[i - 1]
 
 
 avoid_elective_operations= common_params['avoid elective operations']
@@ -121,7 +108,7 @@ cumulative_cases = 0
 
 N = initial_population
 
-N_r = initial_population * initial_population_at_risk_frac
+N_r = initial_population * population_at_risk_frac
 
 recovered_pool = 0
 
@@ -147,7 +134,7 @@ RD_r = 0
 
 infective = 0
 
-exposed_at_risk = initial_exposed * initial_population_at_risk_frac
+exposed_at_risk = initial_exposed * population_at_risk_frac
 
 exposed_no_risk = initial_exposed - (exposed_at_risk)
 
@@ -216,25 +203,25 @@ for i in range(start_time, end_time, time_step):
         RD = RD + rd_I[j-1]*I[j-1]
         RD_r = RD_r + rd_I_r[j-1]*I_r[j-1]
     I[1] = E[exposed_time_period]
-    I_r[1] = E[exposed_time_period] * initial_population_at_risk_frac
+    I_r[1] = E[exposed_time_period] * population_at_risk_frac
     for j in range(exposed_time_period, 1, -1):
         E[j] = (1 - infected_E[j - 1]) * E[j - 1]
         I[1] = I[1] + infected_E[j - 1] * E[j - 1]
-        I_r[1] = I[1] + infected_E[j-1] * E[j - 1] * initial_population_at_risk_frac
+        I_r[1] = I[1] + infected_E[j-1] * E[j - 1] * population_at_risk_frac
     E[1] = social_exposure_rate * susceptible_no_risk + social_exposure_rate * susceptible_at_risk
     Itot_lagged = infective
     infective = np.sum(I) + np.sum(I_r)
     S_lagged = susceptible_no_risk + susceptible_at_risk
-    susceptible_at_risk = INTEG(-social_exposure_rate * susceptible_at_risk, susceptible_at_risk)
-    susceptible_no_risk = INTEG(-social_exposure_rate * susceptible_no_risk, susceptible_no_risk)
+    susceptible_at_risk -= social_exposure_rate * susceptible_at_risk
+    susceptible_no_risk -= social_exposure_rate * susceptible_no_risk
     exposed = np.sum(E)
     N_lagged = N
     N_lagged_r = N_r
-    N = INTEG(-mortality_rate*RD, N)
-    N_r = INTEG(-mortality_rate_at_risk*RD_r, N_r)
     new_deaths = mortality_rate*RD
     new_deaths_r = mortality_rate_at_risk*RD_r
-    deaths = deaths +  + new_deaths_r
+    N -= new_deaths
+    N_r -= new_deaths_r
+    deaths = deaths + new_deaths + new_deaths_r
     recovered_pool = (1 - mortality_rate) * RD
     new_visible_cases = (1 - invisible_fraction) * I[1] + (1 - invisible_fraction) * I_r[1]
     cumulative_cases = cumulative_cases + new_visible_cases
@@ -251,22 +238,22 @@ plt.plot(susceptible_over_time[start_time:end_time] )
 plt.ylabel('SUSCEPTIBLE')
 plt.show()
 print('EXPOSED\n')
-print(exposed_over_time)
+#print(exposed_over_time)
 plt.plot(exposed_over_time[start_time:end_time])
 plt.ylabel('EXPOSED')
 plt.show()
 print('INFECTIVE\n')
-print(infective_over_time)
+#print(infective_over_time)
 plt.plot(infective_over_time[start_time:end_time])
 plt.ylabel('INFECTIVE')
 plt.show()
 print('DEATHS\n')
-print(deaths_over_time)
+#print(deaths_over_time)
 plt.plot(deaths_over_time[start_time:end_time])
 plt.ylabel('DEATHS')
 plt.show()
 print('RECOVERED\n')
-print(recovered_over_time)
+#print(recovered_over_time)
 plt.plot(recovered_over_time[start_time:end_time])
 plt.ylabel('RECOVERED')
 plt.show()

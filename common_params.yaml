@@ -17,7 +17,6 @@ initial:
     total population: 3.27e+08
     exposed population: 5000
     beds per 1000: 2.4
-    population at risk fraction: 0.05 # As a fraction of total population
     infected fraction: 0.00 # As a fraction of total population
 
 ###############################################################
