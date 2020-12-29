@@ -16,8 +16,9 @@ time:
 initial:
     total population: 3.27e+08
     exposed population: 5000
-    beds per 1000: 2.4
     infected fraction: 0.00 # As a fraction of total population
+    
+beds per 1000: 2.4
 
 ###############################################################
 #

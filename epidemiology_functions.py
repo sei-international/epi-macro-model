@@ -1,4 +1,6 @@
+import math
 import numpy as np
+from scipy import stats as st
 import yaml
 
 class Window:
@@ -22,7 +24,7 @@ class Window:
 
 
 class SEIR_matrix:
-    def __init__(self, config_file):
+    def __init__(self, config_file, initial_values):
         
         self.eps = 1.0e-9
         
@@ -48,16 +50,102 @@ class SEIR_matrix:
         
         self.overflow_hospitalized_mortality_rate_factor = seir_params['case fatality rate']['overflow hospitalized mortality rate factor']
 
-        # Calculate the mean infectious period based on the matrix model
+        #-------------------------------------------------------------------
+        # Calculated parameters based on imported parameters
+        #-------------------------------------------------------------------
+        # Mean infectious period based on the matrix model
         self.mean_infectious_period = 0
         P = 1
         for i in range(1,self.infective_time_period):
             self.mean_infectious_period += (i + 1) * P * self.rd_I[i - 1]
             P *= 1 - self.rd_I[i - 1]
+            
+        self.baseline_hospitalized_mortality_rate = self.case_fatality_rate / self.fraction_of_visible_requiring_hospitalization
+        self.baseline_hospitalized_mortality_rate_at_risk = self.case_fatality_rate_at_risk / self.fraction_of_visible_requiring_hospitalization_at_risk
+        
+        self.base_individual_exposure_rate = self.R0/self.mean_infectious_period
+
+        #-------------------------------------------------------------------
+        # State variables
+        #-------------------------------------------------------------------
+        # Total population and population at risk
+        self.N = initial_values['total population']
+        initial_infected = initial_values['infected fraction'] * self.N
+        self.Itot = initial_infected
+        self.Itot_prev = initial_infected
+        self.N_prev = self.N
+
+        # Exposed
+        self.E = np.zeros(self.exposed_time_period + 1)
+        # Infected, either not at risk (nr) or at risk (r)
+        self.I_nr = np.zeros(self.infective_time_period + 1)
+        self.I_r = np.zeros(self.infective_time_period + 1)
+        
+        self.E[1] = initial_values['exposed population']
+        self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
+        self.I_r[1] = self.population_at_risk_frac * initial_infected
+        
+        # Recovered: Assume none at initial time step
+        self.R = 0
+        self.recovered_pool = 0
+
+        # Susceptible population
+        self.S = self.N - self.Itot - self.R - initial_infected
+        self.S_prev = self.S
+        
+        self.new_deaths = 0
 
     def p_spread(self, num_inf, pub_health_factor):
         kn = self.k * num_inf
-        return 1 - (1/(1 + pub_health_factor * self.R0/kn))^kn
+        # product of k & n (as well as R0 and public health factor) must be non-negative
+        if kn < 0:
+            return math.nan
+        # Add small value to ensure no divide-by-zero error
+        return 1 - (1/(1 + pub_health_factor * self.R0/(kn+self.eps)))**kn
+    
+    def mortality_rate(self, infected_fraction, bed_occupancy_fraction, beds_per_1000, at_risk):
+            hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.fraction_of_visible_requiring_hospitalization
+            hospital_z_i = (1 / self.coeff_of_variation_i) * (hospital_p_i_threshold/(infected_fraction + self.eps) - 1)
 
+            mean_exceedance_per_infected_fraction = self.coeff_of_variation_i * (-hospital_z_i * (1 - st.norm.cdf(hospital_z_i)) + math.exp(-0.5 * hospital_z_i ** 2) / math.sqrt(2 * math.pi))
 
+            if at_risk:
+                baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate_at_risk
+            else:
+                baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate
+            
+            return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
 
+    def social_exposure_rate(self, pub_health_factor):
+        return pub_health_factor * self.base_individual_exposure_rate * (self.Itot_prev/self.N_prev) * (1 - self.coeff_of_variation_i**2 * self.Itot_prev/self.S_prev)
+
+    def update(self, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
+        RD_nr = self.I_nr[self.infective_time_period]
+        RD_r = self.I_r[self.infective_time_period]
+        infected_fraction = sum(self.I_r + self.I_nr)/self.N
+
+        for j in range(self.infective_time_period,1,-1):
+            self.I_nr[j] = (1 - self.rd_I[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.rd_I_r[j-1]) * self.I_r[j-1]
+            RD_nr = RD_nr + self.rd_I[j-1]*self.I_nr[j-1]
+            RD_r = RD_r + self.rd_I_r[j-1]*self.I_r[j-1]
+        self.I_nr[1] = (1 - self.population_at_risk_frac) * self.E[self.exposed_time_period]
+        self.I_r[1] = self.population_at_risk_frac * self.E[self.exposed_time_period]
+        for j in range(self.exposed_time_period, 1, -1):
+            new_infected = self.infected_E[j-1] * self.E[j - 1]
+            self.E[j] = self.E[j - 1] - new_infected
+            self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected
+            self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
+        self.Itot_prev = self.Itot
+        self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
+        self.S_prev = self.S
+        self.E[1] = self.social_exposure_rate(pub_health_factor) * self.S
+        self.S -= self.E[1]
+        self.N_prev = self.N
+        new_deaths_nr = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, False) * RD_nr
+        new_deaths_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, True) * RD_r
+        self.new_deaths = new_deaths_nr + new_deaths_r
+        self.N -= self.new_deaths
+        self.recovered_pool = RD_nr + RD_r - self.new_deaths
+        self.R += self.recovered_pool
+        
