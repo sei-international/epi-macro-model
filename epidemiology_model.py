@@ -13,12 +13,6 @@ start_time = common_params['time']['start']
 end_time = common_params['time']['end']
 time_step = common_params['time']['step']
 
-# =============================================================================
-# initial_population= common_params['initial']['total population']
-# initial_exposed = common_params['initial']['exposed population']
-# initial_infected_fraction = common_params['initial']['infected fraction']
-# 
-# =============================================================================
 beds_per_1000 = common_params['beds per 1000']
 
 avoid_elective_operations= common_params['avoid elective operations']
@@ -35,7 +29,6 @@ social_distancing_window = Window(common_params['social distance']['start at'],
 
 max_reduction_in_normal_bed_occupancy= 0.33
 normal_bed_occupancy_fraction = 0.64
-
 
 # Initialize values for indicator graphs
 deaths = 0
@@ -86,34 +79,6 @@ for i in range(start_time, end_time, time_step):
     recovered_over_time[i] = epi.R
     new_visible_cases = (1 - epi.invisible_fraction) * (epi.I_nr[1] + epi.I_r[1])
     cumulative_cases += new_visible_cases
-    
-# =============================================================================
-# print('SUSCEPTIBLE\n')
-# #print(susceptible_over_time)
-# plt.plot(susceptible_over_time[start_time:end_time] )
-# plt.ylabel('SUSCEPTIBLE')
-# plt.show()
-# print('EXPOSED\n')
-# #print(exposed_over_time)
-# plt.plot(exposed_over_time[start_time:end_time])
-# plt.ylabel('EXPOSED')
-# plt.show()
-# print('INFECTIVE\n')
-# #print(infective_over_time)
-# plt.plot(infective_over_time[start_time:end_time])
-# plt.ylabel('INFECTIVE')
-# plt.show()
-# print('DEATHS\n')
-# #print(deaths_over_time)
-# plt.plot(deaths_over_time[start_time:end_time])
-# plt.ylabel('DEATHS')
-# plt.show()
-# print('RECOVERED\n')
-# #print(recovered_over_time)
-# plt.plot(recovered_over_time[start_time:end_time])
-# plt.ylabel('RECOVERED')
-# plt.show()
-# =============================================================================
 
 plt.stackplot(range(start_time, end_time, time_step),
               susceptible_over_time[start_time:end_time],
