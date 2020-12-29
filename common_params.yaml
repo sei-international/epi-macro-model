@@ -18,14 +18,23 @@ initial:
     exposed population: 5000
     infected fraction: 0.00 # As a fraction of total population
     
+
+###############################################################
+#
+# Beds & hospitals
+#
+###############################################################
 beds per 1000: 2.4
+avoid elective operations: true
+bed occupancy:
+    normal: 0.64
+    max reduction: 0.33
 
 ###############################################################
 #
 # Public health measures
 #
 ###############################################################
-avoid elective operations: 1
 isolate_visible_cases: 0
 
 isolate cases:

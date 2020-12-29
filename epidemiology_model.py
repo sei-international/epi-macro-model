@@ -14,6 +14,8 @@ end_time = common_params['time']['end']
 time_step = common_params['time']['step']
 
 beds_per_1000 = common_params['beds per 1000']
+normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
+max_reduction_in_normal_bed_occupancy= common_params['bed occupancy']['max reduction']
 
 avoid_elective_operations= common_params['avoid elective operations']
 
@@ -26,9 +28,6 @@ social_distancing_window = Window(common_params['social distance']['start at'],
                                   common_params['social distance']['end at'],
                                   common_params['social distance']['ramp up for'],
                                   common_params['social distance']['ramp down for'])
-
-max_reduction_in_normal_bed_occupancy= 0.33
-normal_bed_occupancy_fraction = 0.64
 
 # Initialize values for indicator graphs
 deaths = 0
@@ -63,8 +62,12 @@ for i in range(start_time, end_time, time_step):
     PHA_isolate_cases = max(PHA_isolate_visible_cases, PHA_isolate_infectious_cases)
     public_health_adjustment = (1 - PHA_social_distancing) * (1 - PHA_isolate_cases)
     
-    #Beds and Mortality
-    bed_occupancy_fraction = (1 - avoid_elective_operations * social_distancing_window.window(i) * max_reduction_in_normal_bed_occupancy) * normal_bed_occupancy_fraction
+    # Beds and Mortality
+    if avoid_elective_operations:
+        bed_occupancy_factor = (1 - social_distancing_window.window(i) * max_reduction_in_normal_bed_occupancy)
+    else:
+        bed_occupancy_factor = 1
+    bed_occupancy_fraction = bed_occupancy_factor * normal_bed_occupancy_fraction
     
     # Run the model for one time step
     epi.update(public_health_adjustment, bed_occupancy_fraction, beds_per_1000)
