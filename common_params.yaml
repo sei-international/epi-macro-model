@@ -15,7 +15,7 @@ time:
 ###############################################################
 initial:
     total population: 3.27e+08
-    exposed population: 5000
+    exposed population: 50
     infected fraction: 0.00 # As a fraction of total population
     population with community spread: 0.06 # As a fraction of total population
     
@@ -49,7 +49,7 @@ geography:
 isolate_visible_cases: 0
 
 isolate cases:
-    apply to visible cases: true
+    apply to visible cases: false
     apply to infectious cases: false
     fraction of infectious cases identified: 0.9
     start at: 120
@@ -60,7 +60,7 @@ isolate cases:
 social distance:
     apply: true
     effectiveness: 0.75
-    start at: 120
+    start at: 150
     ramp up for: 31
     end at: 600
     ramp down for: 0

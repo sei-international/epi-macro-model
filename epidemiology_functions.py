@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from scipy import stats as st
+from scipy import special as sp
 import yaml
 
 class Window:
@@ -99,13 +100,9 @@ class SEIR_matrix:
         self.p_move = geog['movement probability']
         self.n_loc = geog['number of localities']
 
+    # Probability that num_inf cases generates at least num_inf + 1 additional cases
     def p_spread(self, num_inf, pub_health_factor):
-        kn = self.k * num_inf
-        # product of k & n (as well as R0 and public health factor) must be non-negative
-        if kn < 0:
-            return math.nan
-        # Add small value to ensure no divide-by-zero error
-        return 1 - (1/(1 + pub_health_factor * self.R0/(kn+self.eps)))**kn
+        return 1 - sp.betainc(self.k * num_inf, num_inf + 2, 1/(1 + pub_health_factor * self.R0/self.k))
     
     def mortality_rate(self, infected_fraction, bed_occupancy_fraction, beds_per_1000, at_risk):
             hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.fraction_of_visible_requiring_hospitalization
