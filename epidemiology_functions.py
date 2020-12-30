@@ -101,8 +101,9 @@ class SEIR_matrix:
         self.n_loc = geog['number of localities']
 
     # Probability that num_inf cases generates at least num_inf + 1 additional cases
+    # This is 1 - cumulative probability of <= num_inf cases
     def p_spread(self, num_inf, pub_health_factor):
-        return 1 - sp.betainc(self.k * num_inf, num_inf + 2, 1/(1 + pub_health_factor * self.R0/self.k))
+        return 1 - sp.betainc(self.k * num_inf, num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
     
     def mortality_rate(self, infected_fraction, bed_occupancy_fraction, beds_per_1000, at_risk):
             hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.fraction_of_visible_requiring_hospitalization
