@@ -1,0 +1,92 @@
+###############################################################
+#
+# Start/end time in days
+#
+###############################################################
+time:
+    start: 0
+    end: 548 # 1 1/2 years is 548 days
+    step: 1
+    
+###############################################################
+#
+# Initial values
+#
+###############################################################
+initial:
+    population:
+        urban ports of entry: 1297281 # Population of Bamako, only city with an international airport
+        other urban: 1134434 # Population of other cities
+        rural: 17819118 # Rural population
+    exposed fraction:
+        urban ports of entry: 0.00
+        other urban: 0.00
+        rural: 0.00
+    infected population:
+        urban ports of entry: 20
+        other urban: 0
+        rural: 0
+    exposed population:
+        urban ports of entry: 50
+        other urban: 0
+        rural: 0
+    population with community spread: 0.06 # As a fraction of total population
+    
+###############################################################
+#
+# Mobility
+#
+###############################################################
+international travel:
+    daily arrivals: 1230 # This is an assumption, based on 900,000 passengers per year at Modibo Keita airport/365 and then divided by two to represent incoming
+    fraction infected: 0.001 # For reference, there are about 80 M cases worldwide, for 8 B world population, so 80 M/8 B = 0.01.
+
+
+###############################################################
+#
+# Geographic information
+#
+###############################################################
+geography:
+    number of localities:
+        urban ports of entry: 6 # The 6 communes of the District of Bamako
+        other urban: 31 # The number of urban communes
+        rural: 666 # The number of rural communes
+    # Probability of an individual moving from one locality to another per time step
+    movement probability: 0.0033 # 40% of Americans travel "a few times a year", so: 40% * 3/365 = 0.0033
+
+###############################################################
+#
+# Beds & hospitals
+#
+###############################################################
+beds per 1000: 2.4
+avoid elective operations: true
+bed occupancy:
+    normal: 0.64
+    max reduction: 0.33
+
+###############################################################
+#
+# Public health measures
+#
+###############################################################
+isolate_visible_cases: 0
+
+isolate cases:
+    apply to visible cases: true
+    apply to infectious cases: false
+    fraction of infectious cases identified: 0.9
+    start at: 1
+    ramp up for: 0
+    end at: 600
+    ramp down for: 0
+
+social distance:
+    apply: true
+    effectiveness: 0.75
+    start at: 210
+    ramp up for: 31
+    end at: 600
+    ramp down for: 0
+    

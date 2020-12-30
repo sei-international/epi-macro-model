@@ -121,7 +121,8 @@ class SEIR_matrix:
             return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
 
     def social_exposure_rate(self, pub_health_factor):
-        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/self.comm_spread_frac
+        # Add eps to avoid divide by zero error if comm_spread_frac initialized to zero
+        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(self.comm_spread_frac + self.eps)
         p_i = self.Itot_prev/self.N_prev
         cv_corr = self.coeff_of_variation_i**2 * self.Itot_prev/self.S_prev
         clust_corr = (1 - self.comm_spread_frac) * self.N_prev/self.S_prev
