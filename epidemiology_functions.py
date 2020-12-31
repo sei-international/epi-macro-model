@@ -101,6 +101,12 @@ class SEIR_matrix:
         self.comm_spread_frac = initial_values['population with community spread']
         self.p_move = geog['movement probability']
         self.n_loc = geog['number of localities']
+        
+        #-------------------------------------------------------------------
+        # Reporting variables
+        #-------------------------------------------------------------------
+        self.curr_mortality_rate = 0
+        
 
     # Probability that num_inf cases generates at least num_inf + 1 additional cases
     # This is 1 - cumulative probability of <= num_inf cases
@@ -108,18 +114,26 @@ class SEIR_matrix:
         return 1 - sp.betainc(self.k * num_inf, num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
     
     def mortality_rate(self, infected_fraction, bed_occupancy_fraction, beds_per_1000, at_risk):
-            hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.fraction_of_visible_requiring_hospitalization
-            hospital_z_i = (1 / self.coeff_of_variation_i) * (hospital_p_i_threshold/(infected_fraction + self.eps) - 1)
-
-            mean_exceedance_per_infected_fraction = self.coeff_of_variation_i * (-hospital_z_i * (1 - st.norm.cdf(hospital_z_i)) + math.exp(-0.5 * hospital_z_i ** 2) / math.sqrt(2 * math.pi))
-
-            if at_risk:
-                baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate_at_risk
-            else:
-                baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate
-            
-            return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
-
+        if infected_fraction == 0:
+            return 0
+        # Get parameters for beta distribution
+        alpha_plus_beta = (1/self.coeff_of_variation_i**2) * (1/infected_fraction - 1) - 1
+        if alpha_plus_beta <= 0:
+            return math.nan
+        alpha = alpha_plus_beta * infected_fraction
+        beta = alpha_plus_beta - alpha
+        
+        hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.fraction_of_visible_requiring_hospitalization
+        
+        mean_exceedance_per_infected_fraction = 1 - sp.betainc(alpha + 1, beta, hospital_p_i_threshold) - (hospital_p_i_threshold/infected_fraction) * (1 - sp.betainc(alpha, beta, hospital_p_i_threshold))
+        
+        if at_risk:
+            baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate_at_risk
+        else:
+            baseline_hospitalized_mortality_rate_to_use = self.baseline_hospitalized_mortality_rate
+        
+        return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
+ 
     def social_exposure_rate(self, infected_visitors, pub_health_factor):
         n_i = self.Itot_prev + infected_visitors
         if self.comm_spread_frac == 0:
@@ -141,10 +155,18 @@ class SEIR_matrix:
             RD_r = RD_r + self.rd_I_r[j-1]*self.I_r[j-1]
             self.I_nr[j] = (1 - self.rd_I[j-1]) * self.I_nr[j-1]
             self.I_r[j] = (1 - self.rd_I_r[j-1]) * self.I_r[j-1]
-        infected_fraction = (np.sum(self.I_r + self.I_nr) + infected_visitors)/self.N
+        self.Itot_prev = self.Itot
+        self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
+        
+        # Exclude visitors from this calculation: Tracking domestic population
+        if self.comm_spread_frac == 0:
+            infected_fraction = 0
+        else:
+            infected_fraction = self.Itot/(self.comm_spread_frac * self.N)
         new_deaths_nr = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, False) * RD_nr
         new_deaths_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, True) * RD_r
         self.new_deaths = new_deaths_nr + new_deaths_r
+        self.curr_mortality_rate = self.new_deaths/(RD_nr + RD_r + self.eps)
         self.recovered_pool = RD_nr + RD_r - self.new_deaths
         self.R += self.recovered_pool
 
@@ -160,9 +182,6 @@ class SEIR_matrix:
         self.S_prev = self.S
         self.S -= self.E[1]
 
-        self.Itot_prev = self.Itot
-        self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
-        
         self.N_prev = self.N
         self.N -= self.new_deaths
         ni_addl = (self.p_move * self.Itot + infected_visitors)/self.n_loc

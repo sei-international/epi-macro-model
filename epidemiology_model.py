@@ -75,6 +75,7 @@ recovered_over_time[0] = 0
 initial_population = epi.N
 comm_spread_frac_over_time = np.zeros(end_time - start_time + 1)
 comm_spread_frac_over_time[0] = epi.comm_spread_frac
+mortality_rate_over_time = np.zeros(end_time - start_time + 1)
 
 for i in range(start_time, end_time):
 
@@ -113,6 +114,7 @@ for i in range(start_time, end_time):
     new_visible_cases = (1 - epi.invisible_fraction) * (epi.I_nr[1] + epi.I_r[1])
     cumulative_cases += new_visible_cases
     comm_spread_frac_over_time[i] = epi.comm_spread_frac
+    mortality_rate_over_time[i] = epi.curr_mortality_rate
 
 locator = mdates.AutoDateLocator()
 formatter = mdates.ConciseDateFormatter(locator)
@@ -150,3 +152,11 @@ ax.xaxis.set_major_formatter(formatter)
 plt.plot(datetime_array, comm_spread_frac_over_time[start_time:end_time])
 plt.ylabel('community spread')
 plt.show()
+
+ax = plt.gca()
+ax.xaxis.set_major_locator(locator)
+ax.xaxis.set_major_formatter(formatter)
+plt.plot(datetime_array, mortality_rate_over_time[start_time:end_time])
+plt.ylabel('mortality rate')
+plt.show()
+
