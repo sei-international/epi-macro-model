@@ -16,8 +16,8 @@ with open(r'common_params.yaml') as file:
 epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography'])
 
 start_time = 0
-end_time = common_params['time']['duration']
 start_datetime = get_datetime(common_params['time']['start date'])
+end_time = (get_datetime(common_params['time']['end date']) - start_datetime).days
 datetime_array = [start_datetime + dt.timedelta(days=x) for x in range(start_time, end_time)]
 
 beds_per_1000 = common_params['beds per 1000']
