@@ -5,23 +5,25 @@ from scipy import special as sp
 import yaml
 
 class Window:
-    def __init__(self, start, end, ramp_up, ramp_down):
+    def __init__(self, start, end, ramp_up, ramp_down, effectiveness):
         self.start = start
         self.end = end
         self.ramp_up = ramp_up
         self.ramp_down = ramp_down
+        self.effectiveness = effectiveness
     
     # Ramp to a maximum value of 1.0 and then back down
     # Ramp time can be zero
     def window(self, time):
         if time < self.start or time > self.end:
-            return 0
+            w = 0
         elif time >= self.start + self.ramp_up and time <= self.end - self.ramp_down:
-            return 1
+            w = 1
         elif time < self.start + self.ramp_up:
-            return (time - self.start)/self.ramp_up
+            w = (time - self.start)/self.ramp_up
         else:
-            return (self.end - time)/self.ramp_down
+            w = (self.end - time)/self.ramp_down
+        return self.effectiveness * w
 
 
 class SEIR_matrix:
@@ -118,24 +120,34 @@ class SEIR_matrix:
             
             return (1 - self.invisible_fraction) * self.fraction_of_visible_requiring_hospitalization * baseline_hospitalized_mortality_rate_to_use * ((1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor)
 
-    def social_exposure_rate(self, pub_health_factor):
+    def social_exposure_rate(self, infected_visitors, pub_health_factor):
+        n_i = self.Itot_prev + infected_visitors
+        if self.comm_spread_frac == 0:
+            adj_comm_spread_frac = self.n_loc * n_i/self.N_prev
+        else:
+            adj_comm_spread_frac = self.comm_spread_frac
         # Add eps to avoid divide by zero error if comm_spread_frac initialized to zero
-        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(self.comm_spread_frac + self.eps)
-        p_i = self.Itot_prev/self.N_prev
-        cv_corr = self.coeff_of_variation_i**2 * self.Itot_prev/self.S_prev
-        clust_corr = (1 - self.comm_spread_frac) * self.N_prev/self.S_prev
+        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(adj_comm_spread_frac + self.eps)
+        p_i = n_i/self.N_prev
+        cv_corr = self.coeff_of_variation_i**2 * n_i/self.S_prev
+        clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/self.S_prev
         return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
 
-    def update(self, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
+    def update(self, infected_visitors, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
         RD_nr = self.I_nr[self.infective_time_period]
         RD_r = self.I_r[self.infective_time_period]
-        infected_fraction = sum(self.I_r + self.I_nr)/self.N
-
         for j in range(self.infective_time_period,1,-1):
-            self.I_nr[j] = (1 - self.rd_I[j-1]) * self.I_nr[j-1]
-            self.I_r[j] = (1 - self.rd_I_r[j-1]) * self.I_r[j-1]
             RD_nr = RD_nr + self.rd_I[j-1]*self.I_nr[j-1]
             RD_r = RD_r + self.rd_I_r[j-1]*self.I_r[j-1]
+            self.I_nr[j] = (1 - self.rd_I[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.rd_I_r[j-1]) * self.I_r[j-1]
+        infected_fraction = (np.sum(self.I_r + self.I_nr) + infected_visitors)/self.N
+        new_deaths_nr = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, False) * RD_nr
+        new_deaths_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, True) * RD_r
+        self.new_deaths = new_deaths_nr + new_deaths_r
+        self.recovered_pool = RD_nr + RD_r - self.new_deaths
+        self.R += self.recovered_pool
+
         self.I_nr[1] = (1 - self.population_at_risk_frac) * self.E[self.exposed_time_period]
         self.I_r[1] = self.population_at_risk_frac * self.E[self.exposed_time_period]
         for j in range(self.exposed_time_period, 1, -1):
@@ -143,18 +155,16 @@ class SEIR_matrix:
             self.E[j] = self.E[j - 1] - new_infected
             self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected
             self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
+        alpha = 1.0 * self.social_exposure_rate(infected_visitors, pub_health_factor)
+        self.E[1] = alpha * self.S
+        self.S_prev = self.S
+        self.S -= self.E[1]
+
         self.Itot_prev = self.Itot
         self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
-        self.S_prev = self.S
-        self.E[1] = self.social_exposure_rate(pub_health_factor) * self.S
-        self.S -= self.E[1]
+        
         self.N_prev = self.N
-        new_deaths_nr = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, False) * RD_nr
-        new_deaths_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, True) * RD_r
-        self.new_deaths = new_deaths_nr + new_deaths_r
         self.N -= self.new_deaths
-        self.recovered_pool = RD_nr + RD_r - self.new_deaths
-        self.R += self.recovered_pool
-        ni_addl = self.p_move * self.Itot/self.n_loc
+        ni_addl = (self.p_move * self.Itot + infected_visitors)/self.n_loc
         self.comm_spread_frac += (1 - self.comm_spread_frac) * self.p_spread(ni_addl, pub_health_factor)
         
