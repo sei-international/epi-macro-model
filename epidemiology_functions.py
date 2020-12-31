@@ -5,7 +5,7 @@ from scipy import special as sp
 import yaml
 
 class Window:
-    def __init__(self, start, end, ramp_up, ramp_down, effectiveness):
+    def __init__(self, start, end, ramp_up, ramp_down, effectiveness = 1.0):
         self.start = start
         self.end = end
         self.ramp_up = ramp_up

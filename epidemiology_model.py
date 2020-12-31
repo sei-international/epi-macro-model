@@ -26,11 +26,23 @@ max_reduction_in_normal_bed_occupancy= common_params['bed occupancy']['max reduc
 
 avoid_elective_operations= common_params['avoid elective operations']
 
-isolate_cases_window = Window(common_params['isolate cases']['start at'],
-                              common_params['isolate cases']['end at'],
-                              common_params['isolate cases']['ramp up for'],
-                              common_params['isolate cases']['ramp down for'],
-                              0)
+isolate_symptomatic_cases_windows = []
+for window in common_params['isolate symptomatic cases']:
+    if window['apply']:
+        isolate_symptomatic_cases_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                                        (get_datetime(window['end date']) - start_datetime).days,
+                                                        window['ramp up for'],
+                                                        window['ramp down for'],
+                                                        (1 - epi.invisible_fraction) * window['fraction of cases isolated']))
+
+test_and_trace_windows = []
+for window in common_params['test and trace']:
+    if window['apply']:
+        test_and_trace_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                             (get_datetime(window['end date']) - start_datetime).days,
+                                             window['ramp up for'],
+                                             window['ramp down for'],
+                                             window['fraction of infectious cases isolated']))
 
 soc_dist_windows = []
 for window in common_params['social distance']:
@@ -70,15 +82,12 @@ for i in range(start_time, end_time):
     PHA_social_distancing = 0
     for w in soc_dist_windows:
         PHA_social_distancing += w.window(i)
-    
-    if common_params['isolate cases']['apply to visible cases']:
-        PHA_isolate_visible_cases = (1 - epi.invisible_fraction) * isolate_cases_window.window(i)
-    else:
-        PHA_isolate_visible_cases = 0
-    if common_params['isolate cases']['apply to infectious cases']:
-        PHA_isolate_infectious_cases = common_params['isolate cases']['fraction of infectious cases identified'] * isolate_cases_window.window(i)
-    else:
-        PHA_isolate_infectious_cases = 0
+    PHA_isolate_visible_cases = 0
+    for w in isolate_symptomatic_cases_windows:
+        PHA_isolate_visible_cases += w.window(i)
+    PHA_isolate_infectious_cases = 0
+    for w in test_and_trace_windows:
+        PHA_isolate_infectious_cases += w.window(i)
     PHA_isolate_cases = max(PHA_isolate_visible_cases, PHA_isolate_infectious_cases)
     public_health_adjustment = (1 - PHA_social_distancing) * (1 - PHA_isolate_cases)
     
