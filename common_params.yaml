@@ -48,7 +48,7 @@ international travel:
 geography:
     number of localities: 3006 # 3006 counties, 50 states
     # Probability of an individual moving from one locality to another per time step
-    movement probability: 0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+    movement probability: 0.001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
 
 ###############################################################
 #
@@ -57,7 +57,7 @@ geography:
 ###############################################################
 
 isolate symptomatic cases:
-    -   apply: false
+    -   apply: true
         fraction of cases isolated: 0.8
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31
@@ -73,13 +73,13 @@ test and trace:
         ramp down for: 31
 
 social distance:
-    -   apply: false
+    -   apply: true
         effectiveness: 0.75
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
         ramp down for: 15 # days
-    -   apply: false
+    -   apply: true
         effectiveness: 0.25
         start date: {year: 2020, month: 8, day: 5}
         ramp up for: 15 # days

@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from scipy import stats as st
 from scipy import special as sp
 import yaml
 
