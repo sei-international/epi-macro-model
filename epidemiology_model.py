@@ -3,7 +3,28 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
 import yaml
-from epidemiology_functions import Window, SEIR_matrix
+from seir_model import SEIR_matrix
+
+class Window:
+    def __init__(self, start, end, ramp_up, ramp_down, effectiveness = 1.0):
+        self.start = start
+        self.end = end
+        self.ramp_up = ramp_up
+        self.ramp_down = ramp_down
+        self.effectiveness = effectiveness
+    
+    # Ramp to a maximum value of 1.0 and then back down
+    # Ramp time can be zero
+    def window(self, time):
+        if time < self.start or time > self.end:
+            w = 0
+        elif time >= self.start + self.ramp_up and time <= self.end - self.ramp_down:
+            w = 1
+        elif time < self.start + self.ramp_up:
+            w = (time - self.start)/self.ramp_up
+        else:
+            w = (self.end - time)/self.ramp_down
+        return self.effectiveness * w
 
 # d is a dict with keys 'year', 'month', 'day'
 def get_datetime(d):
