@@ -48,7 +48,7 @@ international travel:
 geography:
     number of localities: 3006 # 3006 counties, 50 states
     # Probability of an individual moving from one locality to another per time step
-    movement probability: 0.001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+    internal mobility rate: 0.001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
 
 ###############################################################
 #

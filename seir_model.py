@@ -4,7 +4,7 @@ from scipy import special as sp
 import yaml
 
 class SEIR_matrix:
-    def __init__(self, config_file, initial_values, geog):
+    def __init__(self, config_file, initial_values, n_loc):
         
         self.eps = 1.0e-9
         
@@ -76,8 +76,7 @@ class SEIR_matrix:
         self.new_deaths = 0
         
         self.comm_spread_frac = initial_values['population with community spread']
-        self.p_move = geog['movement probability']
-        self.n_loc = geog['number of localities']
+        self.n_loc = n_loc
         
         #-------------------------------------------------------------------
         # Reporting variables
@@ -124,7 +123,7 @@ class SEIR_matrix:
         clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/self.S_prev
         return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
 
-    def update(self, infected_visitors, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
+    def update(self, infected_visitors, internal_mobility_rate, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
         RD_nr = self.I_nr[self.infective_time_period]
         RD_r = self.I_r[self.infective_time_period]
         for j in range(self.infective_time_period,1,-1):
@@ -161,6 +160,6 @@ class SEIR_matrix:
 
         self.N_prev = self.N
         self.N -= self.new_deaths
-        ni_addl = (self.p_move * self.Itot + infected_visitors)/self.n_loc
+        ni_addl = (internal_mobility_rate * self.Itot + infected_visitors)/self.n_loc
         self.comm_spread_frac += (1 - self.comm_spread_frac) * self.p_spread(ni_addl, pub_health_factor)
         

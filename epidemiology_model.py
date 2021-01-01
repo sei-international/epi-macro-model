@@ -34,7 +34,7 @@ with open(r'common_params.yaml') as file:
     common_params = yaml.full_load(file)
 
 # Load epidemiological model object
-epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography'])
+epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography']['number of localities'])
 
 start_time = 0
 start_datetime = get_datetime(common_params['time']['start date'])
@@ -77,6 +77,9 @@ for window in common_params['social distance']:
 infected_arrivals = common_params['international travel']['daily arrivals'] * \
                     common_params['international travel']['fraction infected'] * \
                     common_params['international travel']['duration of stay']
+                    
+internal_movement_per_person = common_params['geography']['internal mobility rate']
+
 
 # Initialize values for indicator graphs
 deaths = 0
@@ -121,7 +124,7 @@ for i in range(start_time, end_time):
     bed_occupancy_fraction = bed_occupancy_factor * normal_bed_occupancy_fraction
     
     # Run the model for one time step
-    epi.update(infected_arrivals, public_health_adjustment, bed_occupancy_fraction, beds_per_1000)
+    epi.update(infected_arrivals, internal_movement_per_person, public_health_adjustment, bed_occupancy_fraction, beds_per_1000)
     
     # Update values for indicator graphs
     new_deaths_over_time[i] = epi.new_deaths
