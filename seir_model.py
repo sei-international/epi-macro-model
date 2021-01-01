@@ -22,11 +22,11 @@ class SEIR_matrix:
         self.fraction_of_visible_requiring_hospitalization = seir_params['fraction of observed cases requiring hospitalization']['not at risk']
         self.fraction_of_visible_requiring_hospitalization_at_risk = seir_params['fraction of observed cases requiring hospitalization']['at risk']
     
-        self.rd_I = np.array(seir_params['matrix-params']['prob recover or death given infected']['not at risk'])
-        self.infective_time_period = len(self.rd_I)
-        self.rd_I_r = np.array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
-        self.infected_E = np.array(seir_params['matrix-params']['prob infected given exposed'])
-        self.exposed_time_period = len(self.infected_E)
+        self.inf2rd_nr = np.array(seir_params['matrix-params']['prob recover or death given infected']['not at risk'])
+        self.infective_time_period = len(self.inf2rd_nr)
+        self.inf2rd_r = np.array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
+        self.exp2inf = np.array(seir_params['matrix-params']['prob infected given exposed'])
+        self.exposed_time_period = len(self.exp2inf)
         
         self.overflow_hospitalized_mortality_rate_factor = seir_params['case fatality rate']['overflow hospitalized mortality rate factor']
 
@@ -37,8 +37,8 @@ class SEIR_matrix:
         self.mean_infectious_period = 0
         P = 1
         for i in range(1,self.infective_time_period):
-            self.mean_infectious_period += (i + 1) * P * self.rd_I[i - 1]
-            P *= 1 - self.rd_I[i - 1]
+            self.mean_infectious_period += (i + 1) * P * self.inf2rd_nr[i - 1]
+            P *= 1 - self.inf2rd_nr[i - 1]
             
         self.baseline_hospitalized_mortality_rate = self.case_fatality_rate / self.fraction_of_visible_requiring_hospitalization
         self.baseline_hospitalized_mortality_rate_at_risk = self.case_fatality_rate_at_risk / self.fraction_of_visible_requiring_hospitalization_at_risk
@@ -127,10 +127,10 @@ class SEIR_matrix:
         RD_nr = self.I_nr[self.infective_time_period]
         RD_r = self.I_r[self.infective_time_period]
         for j in range(self.infective_time_period,1,-1):
-            RD_nr = RD_nr + self.rd_I[j-1]*self.I_nr[j-1]
-            RD_r = RD_r + self.rd_I_r[j-1]*self.I_r[j-1]
-            self.I_nr[j] = (1 - self.rd_I[j-1]) * self.I_nr[j-1]
-            self.I_r[j] = (1 - self.rd_I_r[j-1]) * self.I_r[j-1]
+            RD_nr = RD_nr + self.inf2rd_nr[j-1]*self.I_nr[j-1]
+            RD_r = RD_r + self.inf2rd_r[j-1]*self.I_r[j-1]
+            self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.Itot_prev = self.Itot
         self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
         
@@ -149,7 +149,7 @@ class SEIR_matrix:
         self.I_nr[1] = (1 - self.population_at_risk_frac) * self.E[self.exposed_time_period]
         self.I_r[1] = self.population_at_risk_frac * self.E[self.exposed_time_period]
         for j in range(self.exposed_time_period, 1, -1):
-            new_infected = self.infected_E[j-1] * self.E[j - 1]
+            new_infected = self.exp2inf[j-1] * self.E[j - 1]
             self.E[j] = self.E[j - 1] - new_infected
             self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected
             self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
