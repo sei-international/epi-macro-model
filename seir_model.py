@@ -4,13 +4,38 @@ from scipy import special as sp
 import yaml
 
 class SEIR_matrix:
-    def __init__(self, seir_params_file, initial_values, n_loc):
+    def __init__(self, seir_params_file: str, initial_values: dict, n_loc: int):
+        """ Create a new SEIR_matrix object
+
+        Parameters
+        ----------
+        seir_params_file : str
+            A filename for a YAML file with epidemiological parameters.
+        initial_values : dict
+            A set of initial values as a dict with keys:
+                total population
+                exposed population
+                infected fraction (as a fraction of total population)
+                population with community spread (as a fraction of total population)
+
+        n_loc : int
+            Number of "localities", or areas within the larger area, e.g., districts.
+
+        Raises
+        ------
+        RuntimeError
+            Checks to ensure that two lists that must be the same length in the seir_params_file are the same length.
+
+        Returns
+        -------
+        None.
+
+        """
         
         self.eps = 1.0e-9
         
         with open(seir_params_file) as file:
             seir_params = yaml.full_load(file)
-        
         
         #-------------------------------------------------------------------
         # Basic epidemiological parameters
@@ -27,7 +52,6 @@ class SEIR_matrix:
         self.inf2rd_r = np.array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
         self.exp2inf = np.array(seir_params['matrix-params']['prob infected given exposed'])
         
-
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
@@ -40,6 +64,9 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Calculated parameters based on imported parameters
         #-------------------------------------------------------------------
+        # The not-at-risk and at-risk vectors should be the same length
+        if len(self.inf2rd_r) != len(self.inf2rd_nr):
+            raise RuntimeError("The not-at-risk and at-risk 'prob recover or death given infected' arrays must be the same length")
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
         self.infective_time_period = len(self.inf2rd_nr)
         self.exposed_time_period = len(self.exp2inf)
@@ -58,7 +85,11 @@ class SEIR_matrix:
                                         self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r
 
         self.base_individual_exposure_rate = self.R0/self.mean_infectious_period
-
+        
+        # Assuming that populations of localities follow the normal rank-size rule with exponent -1, calculate ratio
+        # of total population to population in the largest locality
+        self.largest_loc_ranksize_mult = sum([1/x for x in range(1,self.n_loc + 1)])
+        
         #-------------------------------------------------------------------
         # State variables
         #-------------------------------------------------------------------
@@ -92,29 +123,68 @@ class SEIR_matrix:
         self.comm_spread_frac = initial_values['population with community spread']
         
         #-------------------------------------------------------------------
-        # Reporting variables
+        # Misc
         #-------------------------------------------------------------------
         self.curr_mortality_rate = 0
         
 
     # Probability that num_inf cases generates at least num_inf + 1 additional cases
-    # This is 1 - cumulative probability of <= num_inf cases
-    def p_spread(self, num_inf, pub_health_factor):
+    def p_spread(self, num_inf: float, pub_health_factor: float) -> float:
+        """ Calculates the probability that num_inf cases generates at least num_inf + 1 additional cases 
+        
+        Parameters
+        ----------
+        num_inf : float
+            Number of cases. In principle this should be an integer, but it is not required.
+        pub_health_factor : float
+            A value from 0 to 1 that expresses the reduction from R0 to Reff due to public health measures.
+
+        Returns
+        -------
+        float
+            1 - cumulative probability of <= num_inf cases, assuming a negative binomial distribution.
+
+        """
+        
         return 1 - sp.betainc(self.k * num_inf, num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
     
-    def mortality_rate(self, infected_fraction, bed_occupancy_fraction, beds_per_1000):
+    def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float) -> tuple:
+        """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
+        
+        Parameters
+        ----------
+        infected_fraction : float
+            The average infection rate in areas where there is community spread of the disease.
+        bed_occupancy_fraction : float
+            Occupancy rate, excluding the disease. May be less than normal if other procedures are postponed or avoided.
+        beds_per_1000 : float
+            Number of beds per 1000 population.
+
+        Raises
+        ------
+        ValueError
+            The infected_fraction, combined with the 'coeff of variation of infected where spreading' value from the SEIR
+            parameters file, must be consistent with the assumption of a beta distribution of infected individuals across
+            localities. If not, an exception is raised.
+
+        Returns
+        -------
+        tuple
+            The mortality rate for not-at-risk and at-risk populations.
+
+        """
         if infected_fraction == 0:
-            return 0
-        # Calculate parameters for beta distribution
+            return 0.0, 0.0
+        # Calculate parameters for a beta distribution
         alpha_plus_beta = (1/self.coeff_of_variation_i**2) * (1/infected_fraction - 1) - 1
         if alpha_plus_beta <= 0:
-            return math.nan
+            raise ValueError("Parameters are inconsistent with the assumed distribution of infected individuals across localities")
         alpha = alpha_plus_beta * infected_fraction
         beta = alpha_plus_beta - alpha
         
         hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.ave_fraction_of_visible_requiring_hospitalization
         
-        # Calculate mean exceedence fraction assuming a Beta distribution
+        # Calculate mean exceedence fraction assuming a beta distribution
         mean_exceedance_per_infected_fraction = 1 - sp.betainc(alpha + 1, beta, hospital_p_i_threshold) - \
                     (hospital_p_i_threshold/infected_fraction) * (1 - sp.betainc(alpha, beta, hospital_p_i_threshold))
         
@@ -128,21 +198,67 @@ class SEIR_matrix:
         
         return m_nr, m_r
  
-    def social_exposure_rate(self, infected_visitors, pub_health_factor):
+    def social_exposure_rate(self, infected_visitors: float, pub_health_factor: float) -> float:
+        """ Calculates the effective exposure rate per susceptible individual, taking inhomogeneity into account
+        
+        Parameters
+        ----------
+        infected_visitors : float
+            Number of infected individuals who have arrived into the region from outside.
+        pub_health_factor : float
+            A value from 0 to 1 that expresses the reduction from R0 to Reff due to public health measures.
+            
+        Raises
+        ------
+        ValueError
+            If there is not already community spread, the function assumes that any infected visitors all arrive
+            in the largest locality, with a population estimated using the rank-size rule. If the number of visitors
+            exceeds that population, an exception is raised.
+
+        Returns
+        -------
+        float
+            The effective rate of new infections per susceptible individual arcoss the region.
+
+        """
+        # Calculate total infected individuals, taking visitors into account
         n_i = self.Itot_prev + infected_visitors
+        # If there is not already community spread, the visitors may initiate it. Assume they all arrive in one locality and calculate the fraction.
         if self.comm_spread_frac == 0:
-            adj_comm_spread_frac = self.n_loc * n_i/self.N_prev
+            adj_comm_spread_frac = self.largest_loc_ranksize_mult * n_i/self.N_prev
+            if adj_comm_spread_frac > 1:
+                raise ValueError("Number of infected visitors exceeds estimated population in largest locality")
         else:
             adj_comm_spread_frac = self.comm_spread_frac
-        # Add eps to avoid divide by zero error if comm_spread_frac initialized to zero
-        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(adj_comm_spread_frac + self.eps)
+        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/adj_comm_spread_frac
         p_i = n_i/self.N_prev
         cv_corr = self.coeff_of_variation_i**2 * n_i/self.S_prev
         clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/self.S_prev
+        
         return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
 
-    def update(self, infected_visitors, internal_mobility_rate, pub_health_factor, bed_occupancy_fraction, beds_per_1000):
+    def update(self, infected_visitors: float, internal_mobility_rate: float, pub_health_factor: float, bed_occupancy_fraction: float, beds_per_1000: float):
+        """
         
+
+        Parameters
+        ----------
+        infected_visitors : float
+            DESCRIPTION.
+        internal_mobility_rate : float
+            DESCRIPTION.
+        pub_health_factor : float
+            DESCRIPTION.
+        bed_occupancy_fraction : float
+            DESCRIPTION.
+        beds_per_1000 : float
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         #------------------------------------------------------------------------------------------------
         # 1: Calculate new recovered or deceased and shift infected pool
         #------------------------------------------------------------------------------------------------
@@ -157,7 +273,7 @@ class SEIR_matrix:
         self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
         
         #------------------------------------------------------------------------------------------------
-        # 2: Separate recovered and deceased into recovered/deceased pools
+        # 2: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
         # Ignore visitors and internal mobility for this calculation: This is due to progress of the disease alone
         if self.comm_spread_frac == 0:
@@ -168,7 +284,7 @@ class SEIR_matrix:
         self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
         self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
         self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
-        # Update recovered and total population pools
+        # Update recovered pool and total population
         self.R += self.recovered_pool
         self.N_prev = self.N
         self.N -= self.new_deaths
@@ -183,12 +299,11 @@ class SEIR_matrix:
             self.E[j] = self.E[j - 1] - new_infected
             self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected
             self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
-        alpha = 1.0 * self.social_exposure_rate(infected_visitors, pub_health_factor)
         
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool
         #------------------------------------------------------------------------------------------------
-        self.E[1] = alpha * self.S
+        self.E[1] = self.social_exposure_rate(infected_visitors, pub_health_factor) * self.S
         self.S_prev = self.S
         self.S -= self.E[1]
 
