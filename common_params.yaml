@@ -37,7 +37,7 @@ bed occupancy:
 ###############################################################
 international travel:
     daily arrivals: 217000 # Annual (79.1 million) divided by 365
-    fraction infected: 1.0e-4 # Don't know this as of March
+    fraction infected: 1.0e-4 # Don't know this
     duration of stay: 7 # Assume 1 week/visitor
     
 ###############################################################
