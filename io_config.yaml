@@ -1,0 +1,64 @@
+
+target-growth-rate: 0.025 # Annual target growth rate
+
+input-file:
+    name: io/us_io_2019.csv
+    delimiter: ','
+    quote-character: '"'
+
+final-demand:
+    # Note that imports should be negative
+    household: Personal consumption expenditures
+    government: Government consumption expenditures and gross investment
+    investment: Private fixed investment
+    exports: Exports of goods and services
+    imports: Imports of goods and services
+
+wages: Compensation of employees
+
+sectors:
+    count: 15
+    non-tradeables:
+        construction:
+            - Construction
+        public_facing:
+            - Retail trade
+            - Arts, entertainment, recreation, accommodation, and food services
+        social_support:
+            - Educational services, health care, and social assistance
+            - Government
+    tradeables:
+        necessities:
+            - Agriculture, forestry, fishing, and hunting
+            - Utilities
+        industry:
+            - Mining
+            - Manufacturing
+        other:
+            - Wholesale trade
+            - Transportation and warehousing
+            - Information
+            - Finance, insurance, real estate, rental, and leasing
+            - Professional and business services
+            - Other services, except government
+    min-hh-dom-share:
+        necessities: 0.20
+    typical-lifetime: # In years
+        construction: 20
+        public_facing: 15
+        social_support: 20
+        necessities: 20
+        industry: 30
+        other: 20
+    initial-utilization: # Full utilization at normal capacity normalized to 1.0
+        construction: 1.0
+        public_facing: 1.0
+        social_support: 1.0
+        necessities: 1.0
+        industry: 1.0
+        other: 1.0   
+
+# Calibration parameters
+calib:
+    # A value between 0 and 1 that controls how rapidly firms adjust their expectations
+    util-adj-rate: 0.2

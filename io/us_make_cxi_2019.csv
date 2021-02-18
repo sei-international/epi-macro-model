@@ -1,0 +1,27 @@
+"The Make of Commodities by Industries, After Redefinitions"
+"(Millions of dollars)" 
+"Bureau of Economic Analysis" 
+"2019"
+"","Industries/Commodities","11","21","22","23","31G","42","44RT","48TW","51","FIRE","PROF","6","7","81","G","Used","Other",""
+"IOCode","Name","Agriculture, forestry, fishing, and hunting","Mining","Utilities","Construction","Manufacturing","Wholesale trade","Retail trade","Transportation and warehousing","Information","Finance, insurance, real estate, rental, and leasing","Professional and business services","Educational services, health care, and social assistance","Arts, entertainment, recreation, accommodation, and food services","Other services, except government","Government","Scrap, used and secondhand goods /1/","Noncomparable imports and rest-of-the-world adjustment /2/","Total Industry Output"
+" 11","Agriculture, forestry, fishing, and hunting",452273,"...","...","...",11,"...","...","...","...","...","...","...",2407,"...","...","...","...",454691
+" 21","Mining","...",532117,"...","...",23170,"...","...","...","...","...","...","...","...","...","...","...","...",555287
+" 22","Utilities","...",96,495154,"...","...","...","...","...","...","...","...","...","...","...",2124,"...","...",497374
+" 23","Construction","...","...","...",1786646,"...","...","...","...","...","...","...","...","...","...","...","...","...",1786646
+" 31G","Manufacturing","...",941,"...",551,5994615,"...","...","...","...",24,22095,"...","...",120,"...",3735,"...",6022080
+" 42","Wholesale trade","...","...","...","...","...",2068377,"...","...","...","...","...","...","...","...","...","...","...",2068377
+" 44RT","Retail trade","...","...","...","...","...","...",1779993,"...","...","...","...","...","...","...","...","...","...",1779993
+" 48TW","Transportation and warehousing",990,"...","...","...","...","...",22,1352881,"...","...",3866,63,47,"...","...","...","...",1357869
+" 51","Information","...","...","...","...","...","...","...","...",1533582,368,280225,9790,72,5,"...","...","...",1824043
+" FIRE","Finance, insurance, real estate, rental, and leasing","...","...","...","...","...","...","...",32,"...",7337403,"...","...","...",58,"...","...","...",7337493
+" PROF","Professional and business services","...",108,"...","...","...","...","...","...",1104,392,4758052,276,"...","...","...",798,"...",4760730
+" 6","Educational services, health care, and social assistance","...","...","...","...","...","...","...","...","...","...","...",2905330,"...","...","...","...","...",2905330
+" 7","Arts, entertainment, recreation, accommodation, and food services","...","...","...","...","...","...","...","...","...","...","...","...",1667718,"...","...",192,"...",1667909
+" 81","Other services, except government","...","...","...","...","...","...","...","...","...",94,"...",379,"...",935966,"...","...","...",936439
+" G","Government",2115,"...",161051,"...","...","...",5499,32709,1403,40218,18056,371139,43769,3320,3174849,4289,4304,3862721
+"","Total Commodity Output",455378,533262,656205,1787197,6017797,2068377,1785514,1385623,1536090,7378498,5082295,3286975,1714013,939469,3176973,9013,4304,37816985
+"Legend / Footnotes:"
+"1. Consists of only scrap in the make table."
+"2. Consists of only the rest-of-the-world adjustment in the make table."
+"Note. Selected data with zero values are not shown."
+"Note. Detail may not add to total due to rounding."
