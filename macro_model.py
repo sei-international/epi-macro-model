@@ -7,11 +7,19 @@ Created on Thu Feb 18 13:10:09 2021
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import yaml
 from io_model import IO_model
+from common import Window, get_datetime, timesteps_between_dates, get_datetime_array
 
 x = IO_model(r'io_config.yaml')
-nyears = 20
-nsteps = nyears * x.timesteps_per_year
+
+with open(r'common_params.yaml') as file:
+    common_params = yaml.full_load(file)
+
+start_datetime = get_datetime(common_params['time']['start date'])
+nsteps = timesteps_between_dates(common_params['time']['start date'], common_params['time']['end date'], x.days_per_timestep)
+datetime_array = get_datetime_array(common_params['time']['start date'], common_params['time']['end date'], x.days_per_timestep)
 
 VA = pd.DataFrame(columns = x.sectors, index = range(0,nsteps))
 VA.loc[0] = x.get_value_added()
@@ -48,6 +56,17 @@ for t in range(1, nsteps):
 
 plt.plot(GDP)
 plt.show()
+
+locator = mdates.AutoDateLocator()
+formatter = mdates.ConciseDateFormatter(locator)
+
+ax = plt.gca()
+ax.xaxis.set_major_locator(locator)
+ax.xaxis.set_major_formatter(formatter)
+plt.plot(datetime_array, GDP)
+plt.ylabel('GDP')
+plt.show()
+
 
 plt.plot(X_gr)
 plt.plot(GDP_gr)

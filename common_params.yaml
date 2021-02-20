@@ -3,9 +3,12 @@
 # Start/end time in days
 #
 ###############################################################
+#time:
+#    start date: {year: 2020, month: 3, day: 2}
+#    end date: {year: 2020, month: 12, day: 31}
 time:
-    start date: {year: 2020, month: 3, day: 2}
-    end date: {year: 2020, month: 12, day: 31}
+    start date: {year: 2019, month: 3, day: 2}
+    end date: {year: 2035, month: 12, day: 31}
     
 ###############################################################
 #

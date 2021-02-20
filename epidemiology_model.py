@@ -154,8 +154,8 @@ for i in range(start_time, end_time):
     comm_spread_frac_over_time_rural[i] = epi_rural.comm_spread_frac
     mortality_rate_over_time_rural[i] = epi_rural.curr_mortality_rate
 
-    locator = mdates.AutoDateLocator()
-    formatter = mdates.ConciseDateFormatter(locator)
+locator = mdates.AutoDateLocator()
+formatter = mdates.ConciseDateFormatter(locator)
 
 ax = plt.gca()
 ax.xaxis.set_major_locator(locator)

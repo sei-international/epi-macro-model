@@ -4,7 +4,7 @@ Created on Mon Feb 15 16:25:57 2021
 
 @author: Eric
 """
-import math
+
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
@@ -21,6 +21,7 @@ class IO_model:
                                quotechar = io_params['input-file']['quote-character'],
                                index_col = 0)
         
+        self.days_per_timestep = io_params['days-per-time-step']
         self.timesteps_per_year = round(365/io_params['days-per-time-step'])
         self.t = 0 # Initialize timestep counter
 

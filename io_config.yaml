@@ -4,10 +4,6 @@
 # Start/end time in days
 #
 ###############################################################
-time:
-    start date: {year: 2019, month: 1, day: 1}
-    end date: {year: 2035, month: 12, day: 31}
-
 days-per-time-step: 30.42
 
 target-growth-rate: 0.025 # Annual target growth rate
