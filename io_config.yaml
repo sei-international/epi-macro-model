@@ -1,4 +1,15 @@
 
+###############################################################
+#
+# Start/end time in days
+#
+###############################################################
+time:
+    start date: {year: 2019, month: 1, day: 1}
+    end date: {year: 2035, month: 12, day: 31}
+
+days-per-time-step: 30.42
+
 target-growth-rate: 0.025 # Annual target growth rate
 
 input-file:
@@ -60,5 +71,5 @@ sectors:
 
 # Calibration parameters
 calib:
-    # A value between 0 and 1 that controls how rapidly firms adjust their expectations
-    util-adj-rate: 0.2
+    # A utilization level below which firms replace capital equipment but do not otherwise invest
+    threshold-util: 0.7

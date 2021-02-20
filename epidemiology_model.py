@@ -1,34 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import datetime as dt
 import yaml
 from seir_model import SEIR_matrix
-
-class Window:
-    def __init__(self, start, end, ramp_up, ramp_down, effectiveness = 1.0):
-        self.start = start
-        self.end = end
-        self.ramp_up = ramp_up
-        self.ramp_down = ramp_down
-        self.effectiveness = effectiveness
-    
-    # Ramp to a maximum value of 1.0 and then back down
-    # Ramp time can be zero
-    def window(self, time):
-        if time < self.start or time > self.end:
-            w = 0
-        elif time >= self.start + self.ramp_up and time <= self.end - self.ramp_down:
-            w = 1
-        elif time < self.start + self.ramp_up:
-            w = (time - self.start)/self.ramp_up
-        else:
-            w = (self.end - time)/self.ramp_down
-        return self.effectiveness * w
-
-# d is a dict with keys 'year', 'month', 'day'
-def get_datetime(d):
-    return dt.date(d['year'],d['month'],d['day'])
+from common import Window, get_datetime, timesteps_between_dates, get_datetime_array
 
 with open(r'common_params.yaml') as file:
     common_params = yaml.full_load(file)
@@ -36,10 +11,10 @@ with open(r'common_params.yaml') as file:
 # Load epidemiological model object
 epi_urban = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography'][0]['number of localities'],'urban')
 epi_rural = SEIR_matrix(r'seir_params.yaml', common_params['initial'], common_params['geography'][1]['number of localities'], 'rural')
-start_time = 0
 start_datetime = get_datetime(common_params['time']['start date'])
-end_time = (get_datetime(common_params['time']['end date']) - start_datetime).days
-datetime_array = [start_datetime + dt.timedelta(days=x) for x in range(start_time, end_time)]
+start_time = 0
+end_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['end date'])
+datetime_array = get_datetime_array(common_params['time']['start date'], common_params['time']['end date'])
 
 beds_per_1000 = common_params['beds per 1000']
 normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']

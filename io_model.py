@@ -4,11 +4,10 @@ Created on Mon Feb 15 16:25:57 2021
 
 @author: Eric
 """
-
+import math
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
-import random as rand
 import yaml
 
 class IO_model:
@@ -21,6 +20,9 @@ class IO_model:
                                sep = io_params['input-file']['delimiter'],
                                quotechar = io_params['input-file']['quote-character'],
                                index_col = 0)
+        
+        self.timesteps_per_year = round(365/io_params['days-per-time-step'])
+        self.t = 0 # Initialize timestep counter
 
         nsector = io_params['sectors']['count']
         interind_data = csv_data.iloc[:nsector,:nsector]
@@ -53,16 +55,16 @@ class IO_model:
                 self.interind[s2][s] = interind_data.loc[subs][subs2].sum().sum()
                 self.interind[s][s2] = interind_data.loc[subs2][subs].sum().sum()
         
-        self.G = self.findem[io_params['final-demand']['government']]
-        self.H = self.findem[io_params['final-demand']['household']]
+        self.G = self.findem[io_params['final-demand']['government']]/self.timesteps_per_year
+        self.H = self.findem[io_params['final-demand']['household']]/self.timesteps_per_year
         self.H0 = pd.Series(data = 0.0, index = self.H.index)
         min_hh_dom_shares = io_params['sectors']['min-hh-dom-share']
         for s in min_hh_dom_shares:
             self.H0[s] = min_hh_dom_shares[s] * self.H[s]
 
         # Ensure non-tradeables have zero X & M
-        self.X = self.findem[io_params['final-demand']['exports']]
-        self.M = abs(self.findem[io_params['final-demand']['imports']])
+        self.X = self.findem[io_params['final-demand']['exports']]/self.timesteps_per_year
+        self.M = abs(self.findem[io_params['final-demand']['imports']])/self.timesteps_per_year
         self.X[non_tradeables] = 0.0
         self.M[non_tradeables] = 0.0
         
@@ -89,24 +91,29 @@ class IO_model:
         self.Leontief = pd.DataFrame(la.inv(self.Leontief), index = self.sectors, columns = self.sectors)
         
         
-        self.I = sum(inv_expend)
+        self.I = sum(inv_expend)/self.timesteps_per_year
         theta = np.divide(inv_expend, self.I)
         self.theta_dom = theta * self.dom_share
         self.theta_imp = theta - self.theta_dom
         
         self.W = self.wages[io_params['wages']]      
         
-        # Capital depreciation
-        self.delta = np.divide(1.0, pd.Series(io_params['sectors']['typical-lifetime'], index = sector_aggr))
+        # Capital depreciation (annual rate)
+        self.delta_ann = np.divide(1.0, pd.Series(io_params['sectors']['typical-lifetime'], index = sector_aggr))
+        # Correct for time steps per year
+        self.delta = (1 + self.delta_ann)**(1/self.timesteps_per_year) - 1
         
-        # Get target growth rate
-        self.gamma = io_params['target-growth-rate']
+        # Get target growth rate (annual rate)
+        self.gamma_ann = io_params['target-growth-rate']
+        # Correct for time steps per year
+        self.gamma = (1 + self.gamma_ann)**(1/self.timesteps_per_year) - 1
         self.Ygr = pd.Series(data = self.gamma, index = self.sectors)
         self.Wgr = pd.Series(data = self.gamma, index = self.sectors)
         
         # Initialize utilization and related variables
         self.u = pd.Series(data = io_params['sectors']['initial-utilization'], index = self.sectors)
-        self.phi = io_params['calib']['util-adj-rate']
+        epsilon = self.gamma * io_params['calib']['threshold-util']/(1 - io_params['calib']['threshold-util'])
+        self.phi = 1 - epsilon
         self.Ypot = np.divide(self.Y, self.u)
         
         # Create calibrated capital productivities
@@ -120,7 +127,8 @@ class IO_model:
     def get_gross_inv_rate(self):
         num = self.u * (1 + self.gamma)
         den = 1 - self.phi * (1 - self.u)
-        return num/den - 1 + self.delta
+        # Don't allow gross investment to fall below replacement rate
+        return np.maximum(0, num/den - 1) + self.delta
     
     def get_value_added(self):
         return self.Y - np.matmul(self.A, self.Y)
@@ -133,7 +141,16 @@ class IO_model:
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
         self.G *= (1 + self.gamma)
-        self.X *= (1 + self.gamma * rand.gauss(1, 0.3))
+        year = self.t/self.timesteps_per_year
+        if year < 7 or year > 12:
+            Xwindow = 1
+        elif year < 8:
+            Xwindow = 1 - 0.8 * (year - 7)
+        elif year > 8:
+            Xwindow = 1 - 0.8 * (12 - year)/4
+        else:
+            Xwindow = 0.2
+        self.X *= (1 + self.gamma * Xwindow)
         self.F = self.desired_final_demand()
         
     def update_utilization(self):
@@ -164,4 +181,5 @@ class IO_model:
         self.update_desired_final_demand()
         self.update_utilization()
         self.update_wages()
+        self.t += 1
         
