@@ -26,10 +26,11 @@ class IO_model:
         self.t = 0 # Initialize timestep counter
 
         nsector = io_params['sectors']['count']
-        interind_data = csv_data.iloc[:nsector,:nsector]
+        interind_data = csv_data.iloc[:nsector,:nsector]/self.timesteps_per_year
         sector_names_data = list(interind_data)
-        findem_data = csv_data.iloc[:nsector,nsector:]
-        wages_data = csv_data.loc[io_params['wages']][sector_names_data].transpose()
+        findem_data = csv_data.iloc[:nsector,nsector:]/self.timesteps_per_year
+        wages_data = csv_data.loc[io_params['wages']][sector_names_data].transpose()/self.timesteps_per_year
+        self.monetary_units = io_params['monetary-units']
 
         non_tradeables = io_params['sectors']['non-tradeables']
         tradeables = io_params['sectors']['tradeables']
@@ -56,24 +57,25 @@ class IO_model:
                 self.interind[s2][s] = interind_data.loc[subs][subs2].sum().sum()
                 self.interind[s][s2] = interind_data.loc[subs2][subs].sum().sum()
         
-        self.G = self.findem[io_params['final-demand']['government']]/self.timesteps_per_year
-        self.H = self.findem[io_params['final-demand']['household']]/self.timesteps_per_year
+        self.G = self.findem[io_params['final-demand']['government']]
+        self.H = self.findem[io_params['final-demand']['household']]
         self.H0 = pd.Series(data = 0.0, index = self.H.index)
         min_hh_dom_shares = io_params['sectors']['min-hh-dom-share']
         for s in min_hh_dom_shares:
             self.H0[s] = min_hh_dom_shares[s] * self.H[s]
 
         # Ensure non-tradeables have zero X & M
-        self.X = self.findem[io_params['final-demand']['exports']]/self.timesteps_per_year
-        self.M = abs(self.findem[io_params['final-demand']['imports']])/self.timesteps_per_year
+        self.X = self.findem[io_params['final-demand']['exports']]
+        self.M = abs(self.findem[io_params['final-demand']['imports']])
         self.X[non_tradeables] = 0.0
         self.M[non_tradeables] = 0.0
+        
+        self.global_GDP_elast_of_X = io_params['sectors']['global-GDP-elasticity-of-exports']
         
         tot_intermed_dmd = self.interind.sum(1)
         inv_expend = self.findem[io_params['final-demand']['investment']]
         dom_findem = self.H + self.G + inv_expend
-        self.output = tot_intermed_dmd + dom_findem + self.X - self.M
-        self.Y = self.output
+        self.Y = tot_intermed_dmd + dom_findem + self.X - self.M
 
         # Domestic production as share of total domestic final demand: assume G domestically supplied
         self.dom_share = 1 - np.divide(self.M, tot_intermed_dmd + dom_findem - self.G)
@@ -125,6 +127,13 @@ class IO_model:
         payback_period = (1 + self.gamma) * self.I/denom
         self.capprod = np.divide(1.0, payback_period * profshare)
         
+        #-----------------------------------------------
+        # Public health parameters
+        #-----------------------------------------------
+        self.soc_dist_sens = io_params['public-health-response']['social-distance-sensitivity']
+        self.hosp_sens = io_params['hospitalization-sensitivity']
+        self.max_util = 1.05 # Max utilization exceedance
+        
     def get_gross_inv_rate(self):
         num = self.u * (1 + self.gamma)
         den = 1 - self.phi * (1 - self.u)
@@ -132,29 +141,37 @@ class IO_model:
         return np.maximum(0, num/den - 1) + self.delta
     
     def get_value_added(self):
-        return self.Y - np.matmul(self.A, self.Y)
+        return np.multiply(self.Y, 1 - self.A.sum(0))
     
     def desired_final_demand(self):
         return self.H - np.multiply(self.m_H, self.H - self.H0) + self.G + self.X
         
-    def update_desired_final_demand(self):
+    def update_desired_final_demand(self, global_GDP_gr, hospitalization_index, soc_distance):
         # TODO: Replace this stub, where everything grows at the constant target rate
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
         self.G *= (1 + self.gamma)
-        year = self.t/self.timesteps_per_year
-        if year < 7 or year > 12:
-            Xwindow = 1
-        elif year < 8:
-            Xwindow = 1 - 0.8 * (year - 7)
-        elif year > 8:
-            Xwindow = 1 - 0.8 * (12 - year)/4
-        else:
-            Xwindow = 0.2
-        self.X *= (1 + self.gamma * Xwindow)
+        # year = self.t/self.timesteps_per_year
+        # if year < 7 or year > 12:
+        #     Xwindow = 1
+        # elif year < 8:
+        #     Xwindow = 1 - 0.8 * (year - 7)
+        # elif year > 8:
+        #     Xwindow = 1 - 0.8 * (12 - year)/4
+        # else:
+        #     Xwindow = 0.2
+        # self.X *= (1 + self.gamma * Xwindow)
+        for s in self.sectors_tradeable:
+            self.X[s] *= 1 + global_GDP_gr * self.global_GDP_elast_of_X[s]
         self.F = self.desired_final_demand()
+        # Now correct for social distancing
+        for s in self.soc_dist_sens:
+            self.F *= 1 - soc_distance * self.soc_dist_sens[s]
+        # And hospitalization sensitivity
+        for s in self.hosp_sens:
+            self.F *= 1 + (hospitalization_index - 1) * self.hosp_sens[s]
         
-    def update_utilization(self):
+    def update_utilization(self, hospitalization_index):
         g = self.get_gross_inv_rate()
         self.I = np.multiply(np.divide(g, self.capprod), self.Ypot).sum()
         dom_supply = np.dot(self.Leontief, self.F + self.theta_dom * self.I)
@@ -162,6 +179,10 @@ class IO_model:
         Ystar = np.multiply(1 + g - self.delta, self.Ypot)
         ustar = np.divide(dom_supply, Ystar)
         self.u = np.minimum(1, ustar)
+        # Correct for sectors affected by hospitalization, which might exceed one
+        for s in self.hosp_sens:
+            effective_util = 1 + (hospitalization_index - 1) * self.hosp_sens[s]
+            self.u[s] = min(max(1, min(self.max_util, effective_util)), ustar[s])
         # A matrix used in subsequent calculations: Keep here to keep expressions manageable
         B = self.ident - np.matmul(self.ident - np.diag(self.m_A), self.A)
         deltaF = np.dot(B, np.multiply(ustar - self.u, Ystar))
@@ -177,10 +198,10 @@ class IO_model:
         self.W = np.multiply(self.W, 1 + self.Ygr)
         self.Wgr = self.W.sum()/Wprev - 1
         
-    def update(self):
+    def update(self, global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0):
         # These must occur in this order:
-        self.update_desired_final_demand()
-        self.update_utilization()
+        self.update_desired_final_demand(global_GDP_gr, hospitalization_index, soc_distance)
+        self.update_utilization(hospitalization_index)
         self.update_wages()
         self.t += 1
         
