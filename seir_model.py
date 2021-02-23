@@ -3,7 +3,7 @@ from scipy import special as sp
 import yaml
 
 class SEIR_matrix:
-    def __init__(self, seir_params_file: str, initial_values: dict, n_loc: int, loc_type: str):
+    def __init__(self, seir_params_file: str, initial_values: dict, geography: dict):
         """ Create a new SEIR_matrix object
 
         Parameters
@@ -54,7 +54,7 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
-        self.n_loc = n_loc
+        self.n_loc = geography['number of localities']
         self.coeff_of_variation_i= seir_params['statistical-model']['coeff of variation of infected where spreading']
         fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['not at risk']
         fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
@@ -93,7 +93,7 @@ class SEIR_matrix:
         # State variables
         #-------------------------------------------------------------------
         # Total population and population at risk
-        self.N = initial_values['total population']*initial_values[loc_type]
+        self.N = geography['population']
         initial_infected = initial_values['infected fraction'] * self.N
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
