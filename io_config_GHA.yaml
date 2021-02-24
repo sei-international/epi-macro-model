@@ -15,7 +15,7 @@ input-file:
     
 monetary-units:
     scale: 1.0e+6 # Note that both the ".0" and "+" sign are required
-    currency: Ghanaian Cedis	
+    currency: Ghanaian Cedis
 
 final-demand:
     # Note that imports should be negative
@@ -29,7 +29,7 @@ wages: wage bill
 
 
 sectors:
-    count: 15
+    count: 55
     non-tradeables:
         construction:
             - acons
@@ -144,7 +144,7 @@ sectors:
 calib:
     # A utilization level below which firms replace capital equipment but do not otherwise invest
     threshold-util: 0.7
-    
+
 #-------------------------------------------
 # COVID-related parameters
 #-------------------------------------------
