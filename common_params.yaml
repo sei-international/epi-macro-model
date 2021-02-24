@@ -38,23 +38,17 @@ bed occupancy:
 # Mobility
 #
 ###############################################################
-<<<<<<< HEAD
-
-=======
 international travel:
     daily arrivals: 217000 # Annual (79.1 million) divided by 365
     fraction infected: 1.0e-4 # Don't know this
     duration of stay: 7 # Assume 1 week/visitor
     
->>>>>>> parent of 59e08c2 (Add files via upload)
 global-GDP-trajectory: # Growth on an annualized basis
     - [{year: 2020, month: 3, day: 17}, 0.03]
     - [{year: 2020, month: 5, day: 1}, -0.10]
     - [{year: 2020, month: 10, day: 1}, 0.0]
     - [{year: 2021, month: 2, day: 1}, 0.03]
-<<<<<<< HEAD
 
-=======
     
 ###############################################################
 #
@@ -72,7 +66,7 @@ geography:
       # Probability of an individual moving from one locality to another per time step
       internal mobility rate: 0.0001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
       external mobility rate: 0.0001
->>>>>>> parent of 59e08c2 (Add files via upload)
+
 ###############################################################
 #
 # Public health measures
