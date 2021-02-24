@@ -1,0 +1,158 @@
+
+###############################################################
+#
+# Start/end time in days
+#
+###############################################################
+days-per-time-step: 30.42 # 7
+
+target-growth-rate: 0.060 # Annual target growth rate
+
+input-file:
+    name: io/GHA_IO_2015.csv
+    delimiter: ','
+    quote-character: '"'
+    
+monetary-units:
+    scale: 1.0e+6 # Note that both the ".0" and "+" sign are required
+    currency: Ghanaian Cedis	
+
+final-demand:
+    # Note that imports should be negative
+    household: households
+    government: government
+    investment: investment
+    exports: exports
+    imports: imports
+
+wages: wage bill
+
+
+sectors:
+    count: 15
+    non-tradeables:
+        construction:
+            - acons
+        food_nt:
+            - amaiz
+            - asorg
+            - apuls
+            - agnut
+            - acass
+            - aroot
+            - avege
+            - asugr
+            - atoba
+            - acatt
+            - apoul
+            - aoliv
+            - afish
+        public_facing:
+            - atrad
+            - aosrv
+        health_socwork:
+            - aheal
+        other_nt:
+            - aeduc
+            - areal
+            - afsrv
+            - aelec
+            - awatr
+            - afore
+            - acomm
+    tradeables:
+        food_exports:
+            - afoil
+            - aocrp
+            - acoff
+            - acoco
+            - afveg
+            - aoils
+            - acott
+            - afrui
+        oil_mining:
+            - acoil
+            - aomin
+            - apetr
+        accom_foodserv:
+            - ahotl
+        bus_serv:
+            - absrv
+        machinery:
+            - amach
+        transp:
+            - atran
+        necessities:
+            - arice
+            - ameat
+            - agmll
+            - asref
+            - abeve
+            - aptob
+            - atext
+            - aclth
+            - aleat
+            - afood
+        other_tr:
+            - aoman
+            - apadm
+            - achem
+            - anmet
+            - ametl
+    min-hh-dom-share:
+        necessities: 0.20
+        transp: 0.20
+    typical-lifetime: # In years
+        construction: 20
+        food_nt: 15
+        public_facing: 15
+        health_socwork: 15
+        other_nt: 15
+        food_exports: 15
+        oil_mining: 30
+        accom_foodserv: 15
+        bus_serv: 15
+        machinery: 30
+        transp: 20
+        necessities: 20
+        other_tr: 30
+    initial-utilization: # Full utilization at normal capacity normalized to 1.0
+        construction: 1.0
+        food_nt: 1.0
+        public_facing: 1.0
+        health_socwork: 1.0
+        other_nt: 1.0
+        food_exports: 1.0
+        oil_mining: 1.0
+        accom_foodserv: 1.0
+        bus_serv: 1.0
+        machinery: 1.0
+        transp: 1.0
+        necessities: 1.0
+        other_tr: 1.0
+    global-GDP-elasticity-of-exports:
+        food_exports: 1.5
+        oil_mining: 1.5
+        accom_foodserv: 1.5
+        bus_serv: 1.2
+        machinery: 1.0
+        transp: 1.5
+        necessities: 1.0
+        other_tr: 1.0
+
+# Calibration parameters
+calib:
+    # A utilization level below which firms replace capital equipment but do not otherwise invest
+    threshold-util: 0.7
+    
+#-------------------------------------------
+# COVID-related parameters
+#-------------------------------------------
+# The sectors under "public-health-response" should differ from "hospitalization-sensitivity"
+public-health-response:
+    social-distance-sensitivity: # Fractional reduction in final demand when social distancing fully effective
+        public_facing: 0.10
+        accom_foodserv: 0.20
+        transp: 0.05
+hospitalization-sensitivity: # Fractional increase/reduction in final demand due to excess/deficit hospital visits
+    health_socwork: 0.1
