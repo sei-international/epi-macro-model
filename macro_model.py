@@ -76,7 +76,7 @@ for t in range(1, nsteps):
         hosp_index = hospitalization_index[epi_datetime_array.index(macro_datetime_array[t])]
         
     # Advance one timestep
-    x.update(global_GDP_gr[t-1], hosp_index, PHA_social_distancing)
+    x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, PHA_social_distancing)
     
     GDP[t] = x.get_value_added().sum()
     GDP_gr[t] = (GDP[t]/GDP[t-1])**x.timesteps_per_year - 1
@@ -163,3 +163,9 @@ VA_perc = VA.divide(VA.sum(1), 0)
 VA_perc.plot.area()
 
 util.plot()
+
+# GDP growth over 2020
+# t1 = timesteps_between_dates(common_params['time']['start date'], {"year": 2020, "month": 1, "day": 1}, x.days_per_timestep)
+# t2 = timesteps_between_dates(common_params['time']['start date'], {"year": 2021, "month": 1, "day": 1}, x.days_per_timestep)
+# GDP[t2]/GDP[t1] - 1
+# plt.plot(macro_datetime_array, np.cumprod(1 + global_GDP_gr))

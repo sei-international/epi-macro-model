@@ -1,0 +1,26 @@
+###############################################################
+#
+# Geographic information
+#
+###############################################################
+geography:
+    - name: urban
+      number of localities: 25 # 3006 counties, 50 states
+      population: 10000
+      # Probability of an individual moving from one locality to another per time step
+      internal mobility rate: 0.05 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+      external mobility rate: 0.001
+      international travel:
+        daily arrivals: 217000 # Annual (79.1 million) divided by 365
+        fraction infected: 1.0e-4 # Don't know this
+        duration of stay: 7 # Assume 1 week/visitor
+    - name: rural
+      number of localities: 400 # 3006 counties, 50 states
+      population: 10000
+      # Probability of an individual moving from one locality to another per time step
+      internal mobility rate: 0.0001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+      external mobility rate: 0.0001
+      international travel:
+        daily arrivals: 0 # Annual (79.1 million) divided by 365
+        fraction infected: 0 # Don't know this
+        duration of stay: 0 # Assume 1 week/visitor

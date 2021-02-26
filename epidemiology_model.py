@@ -125,7 +125,7 @@ for j in range(0, len(geographies['geography'])):
 
     
         excess_hosp = hosp_per_infective * epi.Itot
-        hospitalization_index[i - start_time] = bed_occupancy_factor + excess_hosp/baseline_hosp
+        hospitalization_index[i] = bed_occupancy_factor + excess_hosp/baseline_hosp
 
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)

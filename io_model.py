@@ -146,23 +146,13 @@ class IO_model:
     def desired_final_demand(self):
         return self.H - np.multiply(self.m_H, self.H - self.H0) + self.G + self.X
         
-    def update_desired_final_demand(self, global_GDP_gr, hospitalization_index, soc_distance):
+    def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance):
         # TODO: Replace this stub, where everything grows at the constant target rate
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
         self.G *= (1 + self.gamma)
-        # year = self.t/self.timesteps_per_year
-        # if year < 7 or year > 12:
-        #     Xwindow = 1
-        # elif year < 8:
-        #     Xwindow = 1 - 0.8 * (year - 7)
-        # elif year > 8:
-        #     Xwindow = 1 - 0.8 * (12 - year)/4
-        # else:
-        #     Xwindow = 0.2
-        # self.X *= (1 + self.gamma * Xwindow)
         for s in self.sectors_tradeable:
-            self.X[s] *= 1 + global_GDP_gr * self.global_GDP_elast_of_X[s]
+            self.X[s] *= 1 + self.gamma + delta_global_GDP_gr * self.global_GDP_elast_of_X[s]
         self.F = self.desired_final_demand()
         # Now correct for social distancing
         for s in self.soc_dist_sens:
@@ -198,9 +188,9 @@ class IO_model:
         self.W = np.multiply(self.W, 1 + self.Ygr)
         self.Wgr = self.W.sum()/Wprev - 1
         
-    def update(self, global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0):
+    def update(self, delta_global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0):
         # These must occur in this order:
-        self.update_desired_final_demand(global_GDP_gr, hospitalization_index, soc_distance)
+        self.update_desired_final_demand(delta_global_GDP_gr, hospitalization_index, soc_distance)
         self.update_utilization(hospitalization_index)
         self.update_wages()
         self.t += 1

@@ -4,7 +4,7 @@
 # Start/end time in days
 #
 ###############################################################
-days-per-time-step: 30.42 # 7
+days-per-time-step: 7 # 30.42
 
 target-growth-rate: 0.060 # Annual target growth rate
 
@@ -131,14 +131,14 @@ sectors:
         necessities: 1.0
         other_tr: 1.0
     global-GDP-elasticity-of-exports:
-        food_exports: 1.5
-        oil_mining: 1.5
-        accom_foodserv: 1.5
-        bus_serv: 1.2
-        machinery: 1.0
-        transp: 1.5
-        necessities: 1.0
-        other_tr: 1.0
+        food_exports: 2.1 # 1.5
+        oil_mining: 2.1 # 1.5
+        accom_foodserv: 2.1 # 1.5
+        bus_serv: 2.1 # 1.2
+        machinery: 2.1 # 1.0
+        transp: 2.1 # 1.5
+        necessities: 2.1 # 1.0
+        other_tr: 2.1 # 1.0
 
 # Calibration parameters
 calib:
