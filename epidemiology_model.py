@@ -8,53 +8,59 @@ from common import Window, get_datetime, timesteps_between_dates, get_datetime_a
 with open(r'common_params.yaml') as file:
     common_params = yaml.full_load(file)
 
-with open(r'geographies.yaml') as geo_file:
-    geographies = yaml.full_load(geo_file)
+with open(r'seir_params.yaml') as file:
+    epi_params = yaml.full_load(file)
+
+with open(r'regions.yaml') as file:
+    regions = yaml.full_load(file)
+
+start_datetime = get_datetime(common_params['time']['COVID start'])
+start_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['COVID start'])
+end_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['end date'])
+epi_datetime_array = get_datetime_array(common_params['time']['COVID start'], common_params['time']['end date'])
+
+epi_invisible_fraction = epi_params['unobserved fraction of cases']
+
+beds_per_1000 = common_params['beds per 1000']
+baseline_hosp = common_params['initial']['total population'] * beds_per_1000/1000
+normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
+max_reduction_in_normal_bed_occupancy= common_params['bed occupancy']['max reduction']
+
+
+avoid_elective_operations= common_params['avoid elective operations']
+
+isolate_symptomatic_cases_windows = []
+for window in common_params['isolate symptomatic cases']:
+    if window['apply']:
+        isolate_symptomatic_cases_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                                        (get_datetime(window['end date']) - start_datetime).days,
+                                                        window['ramp up for'],
+                                                        window['ramp down for'],
+                                                        (1 - epi_invisible_fraction) * window['fraction of cases isolated']))
+
+test_and_trace_windows = []
+for window in common_params['test and trace']:
+    if window['apply']:
+        test_and_trace_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                             (get_datetime(window['end date']) - start_datetime).days,
+                                             window['ramp up for'],
+                                             window['ramp down for'],
+                                             window['fraction of infectious cases isolated']))
+
+soc_dist_windows = []
+for window in common_params['social distance']:
+    if window['apply']:
+        soc_dist_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                       (get_datetime(window['end date']) - start_datetime).days,
+                                       window['ramp up for'],
+                                       window['ramp down for'],
+                                       window['effectiveness']))
 
 # Load epidemiological model object
-for j in range(0, len(geographies['geography'])):
-    info = geographies['geography'][j]
+for j in range(0, len(regions['region'])):
+    info = regions['region'][j]
     epi = SEIR_matrix(r'seir_params.yaml', common_params['initial'], info)
-    start_datetime = get_datetime(common_params['time']['start date'])
-    start_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['COVID start'])
-    end_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['end date'])
-    epi_datetime_array = get_datetime_array(common_params['time']['COVID start'], common_params['time']['end date'])
-
-    beds_per_1000 = common_params['beds per 1000']
-    baseline_hosp = common_params['initial']['total population'] * beds_per_1000/1000
-    normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
-    max_reduction_in_normal_bed_occupancy= common_params['bed occupancy']['max reduction']
     hosp_per_infective = (1 - epi.invisible_fraction) * epi.ave_fraction_of_visible_requiring_hospitalization
-
-
-    avoid_elective_operations= common_params['avoid elective operations']
-
-    isolate_symptomatic_cases_windows = []
-    for window in common_params['isolate symptomatic cases']:
-        if window['apply']:
-            isolate_symptomatic_cases_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                                            (get_datetime(window['end date']) - start_datetime).days,
-                                                            window['ramp up for'],
-                                                            window['ramp down for'],
-                                                            (1 - epi.invisible_fraction) * window['fraction of cases isolated']))
-
-    test_and_trace_windows = []
-    for window in common_params['test and trace']:
-        if window['apply']:
-            test_and_trace_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                                 (get_datetime(window['end date']) - start_datetime).days,
-                                                 window['ramp up for'],
-                                                 window['ramp down for'],
-                                                 window['fraction of infectious cases isolated']))
-
-    soc_dist_windows = []
-    for window in common_params['social distance']:
-        if window['apply']:
-            soc_dist_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                           (get_datetime(window['end date']) - start_datetime).days,
-                                           window['ramp up for'],
-                                           window['ramp down for'],
-                                           window['effectiveness']))
 
     infected_arrivals = (info['international travel']['daily arrivals'] * info['international travel'][
         'fraction infected'] * info['international travel']['duration of stay']) + (
@@ -123,7 +129,6 @@ for j in range(0, len(geographies['geography'])):
         comm_spread_frac_over_time[i] = epi.comm_spread_frac
         mortality_rate_over_time[i] = epi.curr_mortality_rate
 
-    
         excess_hosp = hosp_per_infective * epi.Itot
         hospitalization_index[i] = bed_occupancy_factor + excess_hosp/baseline_hosp
 
@@ -147,28 +152,32 @@ for j in range(0, len(geographies['geography'])):
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(formatter)
     plt.plot(epi_datetime_array, deaths_over_time[0:end_time-start_time])
-    plt.ylabel('cumulative deaths '+ info['name'])
+    plt.ylabel('cumulative deaths')
+    plt.title(info['name'])
     plt.show()
 
     ax = plt.gca()
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(formatter)
     plt.plot(epi_datetime_array, new_deaths_over_time[0:end_time-start_time])
-    plt.ylabel('new deaths/day ' + info['name'])
+    plt.ylabel('new deaths/day')
+    plt.title(info['name'])
     plt.show()
 
     ax = plt.gca()
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(formatter)
     plt.plot(epi_datetime_array, comm_spread_frac_over_time[0:end_time-start_time])
-    plt.ylabel('community spread ' + info['name'])
+    plt.ylabel('community spread')
+    plt.title(info['name'])
     plt.show()
 
     ax = plt.gca()
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(formatter)
     plt.plot(epi_datetime_array, mortality_rate_over_time[0:end_time-start_time])
-    plt.ylabel('mortality rate ' + info['name'])
+    plt.ylabel('mortality rate')
+    plt.title(info['name'])
     plt.show()
 
 
