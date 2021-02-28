@@ -37,3 +37,6 @@ def timesteps_between_dates(d0, d1, days_per_timestep = 1):
 def get_datetime_array(d0, d1, days_per_timestep = 1):
     tot_ts = timesteps_between_dates(d0, d1, days_per_timestep)
     return [get_datetime(d0) + dt.timedelta(days = x * days_per_timestep) for x in range(0, tot_ts)]
+
+def timesteps_over_timedelta_weeks(td, days_per_timestep = 1):
+    return round(dt.timedelta(weeks=td).days/days_per_timestep)

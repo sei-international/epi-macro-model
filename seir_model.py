@@ -3,22 +3,16 @@ from scipy import special as sp
 import yaml
 
 class SEIR_matrix:
-    def __init__(self, seir_params_file: str, initial_values: dict, geography: dict):
+    def __init__(self, seir_params_file: str, region: dict):
         """ Create a new SEIR_matrix object
 
         Parameters
         ----------
         seir_params_file : str
             A filename for a YAML file with epidemiological parameters.
-        initial_values : dict
-            A set of initial values as a dict with keys:
-                total population
-                exposed population
-                infected fraction (as a fraction of total population)
-                population with community spread (as a fraction of total population)
 
-        geography : dict
-            Number of localities and geography population as a dict with keys
+        region : dict
+            Number of localities and region population as a dict with keys
 
 
         Raises
@@ -33,6 +27,8 @@ class SEIR_matrix:
         """
         
         self.eps = 1.0e-9
+        
+        initial_values = region['initial']
         
         with open(seir_params_file) as file:
             seir_params = yaml.full_load(file)
@@ -55,7 +51,7 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
-        self.n_loc = geography['number of localities']
+        self.n_loc = region['number of localities']
         self.coeff_of_variation_i= seir_params['statistical-model']['coeff of variation of infected where spreading']
         fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['not at risk']
         fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
@@ -94,8 +90,8 @@ class SEIR_matrix:
         # State variables
         #-------------------------------------------------------------------
         # Total population and population at risk
-        self.N = geography['population']
-        initial_infected = initial_values['infected fraction'] * self.N
+        self.N = initial_values['population']
+        initial_infected = initial_values['infected fraction'] * self.N/1000 # Entered per 1000
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
         self.N_prev = self.N
@@ -106,7 +102,7 @@ class SEIR_matrix:
         self.I_nr = np.zeros(self.infective_time_period + 1)
         self.I_r = np.zeros(self.infective_time_period + 1)
         
-        self.E[1] = initial_values['exposed population']
+        self.E[1] = 0.0
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
         self.I_r[1] = self.population_at_risk_frac * initial_infected
         
@@ -176,9 +172,7 @@ class SEIR_matrix:
         if infected_fraction == 0:
             return 0.0, 0.0
         # Calculate parameters for a beta distribution
-        alpha_plus_beta = (1/self.coeff_of_variation_i**2) * (1/infected_fraction - 1) - 1
-        if alpha_plus_beta <= 0:
-            raise ValueError("Parameters are inconsistent with the assumed distribution of infected individuals across localities")
+        alpha_plus_beta = max(self.eps, (1/self.coeff_of_variation_i**2) * (1/infected_fraction - 1) - 1)
         alpha = alpha_plus_beta * infected_fraction
         beta = alpha_plus_beta - alpha
         
@@ -223,6 +217,10 @@ class SEIR_matrix:
         """
         # Calculate total infected individuals, taking visitors into account
         n_i = self.Itot_prev + infected_visitors
+        # First, check if there are no infected individuals either in the population or newly introduced
+        if n_i == 0 and self.comm_spread_frac == 0:
+            return 0.0
+        
         # If there is not already community spread, the visitors may initiate it. Assume they all arrive in one locality and calculate the fraction.
         if self.comm_spread_frac == 0:
             adj_comm_spread_frac = self.largest_loc_ranksize_mult * n_i/self.N_prev
@@ -237,7 +235,31 @@ class SEIR_matrix:
         
         return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
 
-    def update(self, infected_visitors: float, internal_mobility_rate: float, pub_health_factor: float, bed_occupancy_fraction: float, beds_per_1000: float):
+    def vaccinations(self, max_vaccine_doses: float) -> float:
+        """
+        
+
+        Parameters
+        ----------
+        max_vaccine_doses: float
+            DESCRIPTION.
+
+        Returns
+        -------
+        Population removed from susceptible and added to recovered pool.
+
+        """
+        # TODO: Preferentially vaccinate at-risk population
+        
+        return min(self.S, max_vaccine_doses)
+        
+
+    def update(self, infected_visitors: float,
+               internal_mobility_rate: float,
+               pub_health_factor: float,
+               bed_occupancy_fraction: float,
+               beds_per_1000: float,
+               max_vaccine_doses: float):
         """
         
 
@@ -252,6 +274,8 @@ class SEIR_matrix:
         bed_occupancy_fraction : float
             DESCRIPTION.
         beds_per_1000 : float
+            DESCRIPTION.
+        max_vaccine_doses: float
             DESCRIPTION.
 
         Returns
@@ -301,11 +325,13 @@ class SEIR_matrix:
             self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
         
         #------------------------------------------------------------------------------------------------
-        # 3: Update new exposures and susceptible pool
+        # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
         self.E[1] = self.social_exposure_rate(infected_visitors, pub_health_factor) * self.S
         self.S_prev = self.S
-        self.S -= self.E[1]
+        vaccinated = self.vaccinations(max_vaccine_doses)
+        self.S -= self.E[1] + vaccinated
+        self.R += vaccinated
 
         #------------------------------------------------------------------------------------------------
         # 4: Update community spread fraction

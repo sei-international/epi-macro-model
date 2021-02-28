@@ -32,7 +32,7 @@ for window in common_params['social distance']:
                                        window['effectiveness']))
 
 # Global GDP
-global_GDP_points = common_params['global-GDP-trajectory']
+global_GDP_points = common_params['global GDP trajectory']
 timesteps_array = np.array(range(0,nsteps))
 global_GDP_ts = np.empty(len(global_GDP_points))
 global_GDP_rate = np.empty(len(global_GDP_points))
