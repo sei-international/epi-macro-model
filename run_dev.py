@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from epidemiology_model import nregions, regions, epi_datetime_array, deaths_over_time, end_time, start_time, \
                                new_deaths_over_time, recovered_over_time, mortality_rate_over_time, \
-                               hospitalization_index, susceptible_over_time, exposed_over_time, \
-                               infective_over_time, comm_spread_frac_over_time
+                               susceptible_over_time, exposed_over_time, infective_over_time, \
+                               comm_spread_frac_over_time
 from macro_model import x, macro_datetime_array, GDP, GDP_ref, X, F, I, u_ave, util, VA
 
 
