@@ -8,9 +8,8 @@ Created on Sat Feb 20 10:07:18 2021
 import sys, getopt
 import re
 import pandas as pd
-from epidemiology_model import nregions, regions, epi_datetime_array, deaths_over_time, end_time, start_time, \
-                               recovered_over_time, susceptible_over_time, exposed_over_time, infective_over_time
-from macro_model import macro_datetime_array, VA
+from epidemiology_model import epidemiology_model
+from macro_model import macroeconomic_model
 
 #---------------------------------------------------------------------------------------------
 #
@@ -22,6 +21,7 @@ try:
 except getopt.GetoptError:
    print('Usage: covid_baselines.py [-m <epi or both (default)>]')
    sys.exit(2)
+model = "both" # Default
 for opt, arg in opts:
    if opt in ("-h", "--help"):
       print("Usage: covid_baselines.py [-m <epi or both (default)>]\n\tUse option \"-m epi\" or \"--model=epi\" to only run the epidemiological model")
@@ -32,23 +32,23 @@ for opt, arg in opts:
           print("Model must be either \"epi\" (for epidemiological model only) or \"both\"")
 
 print('Running epidemiological model...')
-exec(open(r'epidemiology_model.py').read())
+nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, hosp_ndx = epidemiology_model()
 
-for j in range(0,nregions):
-    info = regions[j]
-    d = {'date': epi_datetime_array,
-         'susceptible': susceptible_over_time[j,0:end_time-start_time],
-         'exposed': exposed_over_time[j,0:end_time-start_time],
-         'infected': infective_over_time[j,0:end_time-start_time],
-         'recovered': recovered_over_time[j,0:end_time-start_time],
-         'died': deaths_over_time[j,0:end_time-start_time]}
-    pd.DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', regions[j]['name']) + '.csv', index=False)
+for j in range(0,nrgn):
+    info = rgns[j]
+    d = {'date': epi_dts,
+         'susceptible': susceptible[j,0:end-start],
+         'exposed': exposed[j,0:end-start],
+         'infected': infective[j,0:end-start],
+         'recovered': recovered[j,0:end-start],
+         'died': deaths[j,0:end-start]}
+    pd.DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '.csv', index=False)
 
 if model != 'epi':
     print('Running macroeconomic model...')
-    exec(open(r'macro_model.py').read())
+    macro_dts, VA = macroeconomic_model(epi_dts, hosp_ndx)
     
-    VA.insert(0, 'date', macro_datetime_array)
+    VA.insert(0, 'date', macro_dts)
     VA.to_csv('output_value_added.csv', index=False)
 
 print('Finished')

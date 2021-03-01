@@ -90,7 +90,7 @@ class IO_model:
         # Technical matrix & Leontief matrix
         self.A = np.divide(self.interind, self.Y)
         # Leontief matrix is corrected by the import propensity for intermediate goods
-        self.Leontief = (self.ident - np.matmul((self.ident - np.diag(self.m_A)), self.A)).convert_dtypes()
+        self.Leontief = (self.ident - np.matmul((self.ident - np.diag(self.m_A)), self.A)).astype('float')
         self.Leontief = pd.DataFrame(la.inv(self.Leontief), index = self.sectors, columns = self.sectors)
         
         

@@ -9,7 +9,7 @@ days-per-time-step: 7 # 30.42
 target-growth-rate: 0.060 # Annual target growth rate
 
 input-file:
-    name: io/GHA_IO_2015.csv
+    name: GHA_IO_2015.csv
     delimiter: ','
     quote-character: '"'
     
