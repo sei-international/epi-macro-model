@@ -6,11 +6,10 @@ Created on Thu Feb 18 13:10:09 2021
 """
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import yaml
 from io_model import IO_model
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array
+from epidemiology_model import epi_datetime_array, hospitalization_index
 
 x = IO_model(r'io_config.yaml')
 
@@ -27,6 +26,15 @@ for window in common_params['social distance']:
         ts_start = timesteps_between_dates(common_params['time']['start date'], window['start date'], x.days_per_timestep)
         ts_end = timesteps_between_dates(common_params['time']['start date'], window['end date'], x.days_per_timestep)
         soc_dist_windows.append(Window(ts_start, ts_end,
+                                       round(window['ramp up for']/x.days_per_timestep),
+                                       round(window['ramp down for']/x.days_per_timestep),
+                                       window['effectiveness']))
+travel_ban_windows = []
+for window in common_params['international travel restrictions']:
+    if window['apply'] and window['ban']:
+        ts_start = timesteps_between_dates(common_params['time']['start date'], window['start date'], x.days_per_timestep)
+        ts_end = timesteps_between_dates(common_params['time']['start date'], window['end date'], x.days_per_timestep)
+        travel_ban_windows.append(Window(ts_start, ts_end,
                                        round(window['ramp up for']/x.days_per_timestep),
                                        round(window['ramp down for']/x.days_per_timestep),
                                        window['effectiveness']))
@@ -66,9 +74,11 @@ I_gr[0] = x.gamma_ann
 u_ave = np.zeros(nsteps)
 u_ave[0] = 1
 for t in range(1, nsteps):
-    PHA_social_distancing = 0
+    PHA_demand_reduction_mult = 1
     for w in soc_dist_windows:
-        PHA_social_distancing += w.window(t)
+        PHA_demand_reduction_mult *= (1 - w.window(t))
+    for w in travel_ban_windows:
+        PHA_demand_reduction_mult *= (1 - w.window(t))
     
     if macro_datetime_array[t] < epi_datetime_array[0]:
         hosp_index = 1
@@ -76,7 +86,7 @@ for t in range(1, nsteps):
         hosp_index = hospitalization_index[epi_datetime_array.index(macro_datetime_array[t])]
         
     # Advance one timestep
-    x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, PHA_social_distancing)
+    x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, 1 - PHA_demand_reduction_mult)
     
     GDP[t] = x.get_value_added().sum()
     GDP_gr[t] = (GDP[t]/GDP[t-1])**x.timesteps_per_year - 1
@@ -90,82 +100,3 @@ for t in range(1, nsteps):
     I_gr[t] = (I[t]/I[t-1])**x.timesteps_per_year - 1
     VA.loc[t] = x.get_value_added()
     util.loc[t] = x.u
-
-locator = mdates.AutoDateLocator()
-formatter = mdates.ConciseDateFormatter(locator)
-
-# plt.plot(np.cumprod(1 + global_GDP_gr))
-# plt.show()
-
-units_conversion = x.monetary_units['scale'] * x.timesteps_per_year
-
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
-plt.plot(macro_datetime_array, units_conversion * GDP)
-plt.plot(macro_datetime_array, units_conversion * GDP_ref)
-ax.set_ylim([0,None])
-plt.title('GDP')
-plt.ylabel(x.monetary_units['currency'])
-plt.show()
-
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
-plt.plot(macro_datetime_array, units_conversion * X)
-ax.set_ylim([0,None])
-plt.title('Exports')
-plt.ylabel(x.monetary_units['currency'])
-plt.show()
-
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
-plt.plot(macro_datetime_array, units_conversion * F)
-ax.set_ylim([0,None])
-plt.title('Final Demand, Excluding Investment')
-plt.ylabel(x.monetary_units['currency'])
-plt.show()
-
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
-plt.plot(macro_datetime_array, units_conversion * I)
-ax.set_ylim([0,None])
-plt.title('Investment')
-plt.ylabel(x.monetary_units['currency'])
-plt.show()
-
-
-# ax = plt.gca()
-# ax.xaxis.set_major_locator(locator)
-# ax.xaxis.set_major_formatter(formatter)
-# ax.set_ylim([-5,5])
-# plt.plot(macro_datetime_array, 100 * X_gr)
-# plt.plot(macro_datetime_array, 100 * GDP_gr)
-# plt.plot(macro_datetime_array, 100 * F_gr)
-# plt.plot(macro_datetime_array, 100 * I_gr)
-# plt.legend(['X','GDP','F','I'])
-# plt.ylabel('%/year')
-# plt.show()
-
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
-ax.set_ylim([0.5,1.1])
-plt.plot(macro_datetime_array, u_ave)
-plt.title('Capacity Utilization')
-plt.show()
-
-VA.plot()
-
-VA_perc = VA.divide(VA.sum(1), 0)
-VA_perc.plot.area()
-
-util.plot()
-
-# GDP growth over 2020
-# t1 = timesteps_between_dates(common_params['time']['start date'], {"year": 2020, "month": 1, "day": 1}, x.days_per_timestep)
-# t2 = timesteps_between_dates(common_params['time']['start date'], {"year": 2021, "month": 1, "day": 1}, x.days_per_timestep)
-# GDP[t2]/GDP[t1] - 1
-# plt.plot(macro_datetime_array, np.cumprod(1 + global_GDP_gr))

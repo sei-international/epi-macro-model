@@ -99,6 +99,7 @@ sectors:
             - achem
             - anmet
             - ametl
+            - awood
     min-hh-dom-share:
         necessities: 0.20
         transp: 0.20
@@ -154,5 +155,7 @@ public-health-response:
         public_facing: 0.05
         accom_foodserv: 0.10
         transp: 0.02
+    travel-ban-sensitivity: # Fractional reduction in final demand when travel bans are in place
+        accom_foodserv: 0.10
 hospitalization-sensitivity: # Fractional increase/reduction in final demand due to excess/deficit hospital visits
     health_socwork: 0.05

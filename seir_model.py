@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import special as sp
 import yaml
+import math
 
 class SEIR_matrix:
     def __init__(self, seir_params_file: str, region: dict):
@@ -141,8 +142,8 @@ class SEIR_matrix:
             1 - cumulative probability of <= num_inf cases, assuming a negative binomial distribution.
 
         """
-        
-        return 1 - sp.betainc(self.k * num_inf, num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
+
+        return 1 - sp.betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
     
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float) -> tuple:
         """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
@@ -172,7 +173,7 @@ class SEIR_matrix:
         if infected_fraction == 0:
             return 0.0, 0.0
         # Calculate parameters for a beta distribution
-        alpha_plus_beta = max(self.eps, (1/self.coeff_of_variation_i**2) * (1/infected_fraction - 1) - 1)
+        alpha_plus_beta = max(self.eps, (1/self.coeff_of_variation_i**2) * (1/(infected_fraction + self.eps) - 1) - 1)
         alpha = alpha_plus_beta * infected_fraction
         beta = alpha_plus_beta - alpha
         
@@ -180,7 +181,7 @@ class SEIR_matrix:
         
         # Calculate mean exceedence fraction assuming a beta distribution
         mean_exceedance_per_infected_fraction = 1 - sp.betainc(alpha + 1, beta, hospital_p_i_threshold) - \
-                    (hospital_p_i_threshold/infected_fraction) * (1 - sp.betainc(alpha, beta, hospital_p_i_threshold))
+                    (hospital_p_i_threshold/(infected_fraction + self.eps)) * (1 - sp.betainc(alpha, beta, hospital_p_i_threshold))
         
         # Baseline fraction
         v = 1 - self.invisible_fraction
@@ -223,17 +224,17 @@ class SEIR_matrix:
         
         # If there is not already community spread, the visitors may initiate it. Assume they all arrive in one locality and calculate the fraction.
         if self.comm_spread_frac == 0:
-            adj_comm_spread_frac = self.largest_loc_ranksize_mult * n_i/self.N_prev
+            adj_comm_spread_frac = self.largest_loc_ranksize_mult * n_i/(self.N_prev + self.eps)
             if adj_comm_spread_frac > 1:
                 raise ValueError("Number of infected visitors exceeds estimated population in largest locality")
         else:
             adj_comm_spread_frac = self.comm_spread_frac
-        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/adj_comm_spread_frac
-        p_i = n_i/self.N_prev
-        cv_corr = self.coeff_of_variation_i**2 * n_i/self.S_prev
-        clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/self.S_prev
+        adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(adj_comm_spread_frac + self.eps)
+        p_i = n_i/(self.N_prev + self.eps)
+        cv_corr = self.coeff_of_variation_i**2 * n_i/(self.S_prev + self.eps)
+        clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/(self.S_prev + self.eps)
         
-        return pub_health_factor * adj_base_individual_exposure_rate * p_i * (1 - cv_corr - clust_corr)
+        return pub_health_factor * adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
 
     def vaccinations(self, max_vaccine_doses: float) -> float:
         """
@@ -303,7 +304,7 @@ class SEIR_matrix:
         if self.comm_spread_frac == 0:
             infected_fraction = 0
         else:
-            infected_fraction = self.Itot/(self.comm_spread_frac * self.N)
+            infected_fraction = self.Itot/(self.comm_spread_frac * self.N + self.eps)
         m_nr, m_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000)
         self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
         self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
@@ -329,8 +330,10 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         self.E[1] = self.social_exposure_rate(infected_visitors, pub_health_factor) * self.S
         self.S_prev = self.S
+        self.S -= self.E[1]
+        # Do this update after accounting for newly exposed
         vaccinated = self.vaccinations(max_vaccine_doses)
-        self.S -= self.E[1] + vaccinated
+        self.S -= vaccinated
         self.R += vaccinated
 
         #------------------------------------------------------------------------------------------------

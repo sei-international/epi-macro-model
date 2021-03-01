@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import yaml
 from seir_model import SEIR_matrix
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array, timesteps_over_timedelta_weeks
@@ -106,7 +104,7 @@ for window in common_params['social distance']:
                                        window['effectiveness']))
 
 travel_restrictions_windows = []
-for window in common_params['travel restrictions']:
+for window in common_params['international travel restrictions']:
     if window['apply']:
         travel_restrictions_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
                                        (get_datetime(window['end date']) - start_datetime).days,
@@ -123,7 +121,9 @@ deaths_over_time = np.zeros((nregions, ntimesteps))
 new_deaths_over_time = np.zeros((nregions, ntimesteps))
 recovered_over_time = np.zeros((nregions, ntimesteps))
 mortality_rate_over_time = np.zeros((nregions, ntimesteps))
-hospitalization_index = np.ones((nregions, ntimesteps))
+
+hospitalization_index_region = np.ones(nregions)
+hospitalization_index = np.ones(ntimesteps)
 
 susceptible_over_time = np.zeros((nregions, ntimesteps))
 susceptible_over_time[:,0] = [e.S for e in epi]
@@ -191,56 +191,7 @@ for i in range(0, ntimesteps):
         cumulative_cases[j] += (1 - epi[j].invisible_fraction) * (epi[j].I_nr[1] + epi[j].I_r[1])
         comm_spread_frac_over_time[j,i] = epi[j].comm_spread_frac
         mortality_rate_over_time[j,i] = epi[j].curr_mortality_rate
-        hospitalization_index[j,i] = bed_occupancy_factor + hosp_per_infective * epi[j].Itot/baseline_hosp[j]
-
-locator = mdates.AutoDateLocator()
-formatter = mdates.ConciseDateFormatter(locator)
-
-for j in range(0,nregions):
-    info = regions[j]
+        hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * epi[j].Itot/baseline_hosp[j]
+        
+    hospitalization_index[i] = np.amax(hospitalization_index_region)
     
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    plt.stackplot(epi_datetime_array,
-                  susceptible_over_time[j,0:end_time-start_time],
-                  exposed_over_time[j,0:end_time-start_time],
-                  infective_over_time[j,0:end_time-start_time],
-                  recovered_over_time[j,0:end_time-start_time],
-                  deaths_over_time[j,0:end_time-start_time],
-                  labels=['susceptible','exposed','infected','recovered','died'])
-    plt.legend(loc='lower right')
-    plt.title(info['name'])
-    plt.show()
-    
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    plt.plot(epi_datetime_array, deaths_over_time[j,0:end_time-start_time])
-    plt.ylabel('cumulative deaths')
-    plt.title(info['name'])
-    plt.show()
-    
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    plt.plot(epi_datetime_array, new_deaths_over_time[j,0:end_time-start_time])
-    plt.ylabel('new deaths/day')
-    plt.title(info['name'])
-    plt.show()
-    
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    plt.plot(epi_datetime_array, comm_spread_frac_over_time[j,0:end_time-start_time])
-    plt.ylabel('community spread')
-    plt.title(info['name'])
-    plt.show()
-    
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    plt.plot(epi_datetime_array, mortality_rate_over_time[j,0:end_time-start_time])
-    plt.ylabel('mortality rate')
-    plt.title(info['name'])
-    plt.show()
