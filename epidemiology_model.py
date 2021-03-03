@@ -1,4 +1,5 @@
-import numpy as np
+from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, \
+    amax as np_amax, interp as np_interp, ones as np_ones
 import yaml
 from seir_model import SEIR_matrix
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array, timesteps_over_timedelta_weeks
@@ -41,7 +42,7 @@ def epidemiology_model():
     epi_invisible_fraction = epi[0].invisible_fraction
     
     normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
-    max_reduction_in_normal_bed_occupancy= common_params['bed occupancy']['max reduction']
+    max_reduction_in_normal_bed_occupancy = common_params['bed occupancy']['max reduction']
     
     
     avoid_elective_operations= common_params['avoid elective operations']
@@ -52,13 +53,13 @@ def epidemiology_model():
     global_infection_traj_start = global_infection_points[0][0]
     if get_datetime(global_infection_traj_start) > start_datetime:
         global_infection_traj_start = common_params['time']['COVID start']
-    global_infection_traj_timesteps_array = np.array(range(0,timesteps_between_dates(global_infection_traj_start, common_params['time']['end date']) + 1))
-    global_infection_ts = np.empty(global_infection_npoints)
-    global_infection_val = np.empty(global_infection_npoints)
+    global_infection_traj_timesteps_array = np_array(range(0,timesteps_between_dates(global_infection_traj_start, common_params['time']['end date']) + 1))
+    global_infection_ts = np_empty(global_infection_npoints)
+    global_infection_val = np_empty(global_infection_npoints)
     for i in range(0,global_infection_npoints):
         global_infection_ts[i] = timesteps_between_dates(global_infection_traj_start, global_infection_points[i][0])
         global_infection_val[i] = global_infection_points[i][1]/1000 # Values are entered per 1000
-    global_infection_rate = np.interp(global_infection_traj_timesteps_array, global_infection_ts, global_infection_val)
+    global_infection_rate = np_interp(global_infection_traj_timesteps_array, global_infection_ts, global_infection_val)
     # Trunctate at start as necessary
     ntrunc = timesteps_between_dates(global_infection_traj_start, common_params['time']['COVID start'])
     global_infection_rate = global_infection_rate[ntrunc:]
@@ -67,13 +68,13 @@ def epidemiology_model():
     vaccination_points = common_params['vaccination']['maximum doses per day']
     vaccination_delay = timesteps_over_timedelta_weeks(common_params['vaccination']['time to efficacy'])
     vaccination_npoints = len(vaccination_points)
-    vaccination_timesteps_array = np.array(range(0,timesteps_between_dates(common_params['time']['COVID start'], common_params['time']['end date']) + 1))
-    vaccination_ts = np.empty(vaccination_npoints)
-    vaccination_val = np.empty(vaccination_npoints)
+    vaccination_timesteps_array = np_array(range(0,timesteps_between_dates(common_params['time']['COVID start'], common_params['time']['end date']) + 1))
+    vaccination_ts = np_empty(vaccination_npoints)
+    vaccination_val = np_empty(vaccination_npoints)
     for i in range(0,vaccination_npoints):
         vaccination_ts[i] = timesteps_between_dates(common_params['time']['COVID start'], vaccination_points[i][0]) + vaccination_delay
         vaccination_val[i] = vaccination_points[i][1]
-    vaccination_max_doses = np.interp(vaccination_timesteps_array, vaccination_ts, vaccination_val)
+    vaccination_max_doses = np_interp(vaccination_timesteps_array, vaccination_ts, vaccination_val)
     
     isolate_symptomatic_cases_windows = []
     for window in common_params['isolate symptomatic cases']:
@@ -113,27 +114,27 @@ def epidemiology_model():
     
     
     # Initialize values for indicator graphs
-    deaths = np.zeros(nregions)
-    cumulative_cases = np.zeros(nregions)
+    deaths = np_zeros(nregions)
+    cumulative_cases = np_zeros(nregions)
     
-    deaths_over_time = np.zeros((nregions, ntimesteps))
-    new_deaths_over_time = np.zeros((nregions, ntimesteps))
-    recovered_over_time = np.zeros((nregions, ntimesteps))
-    mortality_rate_over_time = np.zeros((nregions, ntimesteps))
+    deaths_over_time = np_zeros((nregions, ntimesteps))
+    new_deaths_over_time = np_zeros((nregions, ntimesteps))
+    recovered_over_time = np_zeros((nregions, ntimesteps))
+    mortality_rate_over_time = np_zeros((nregions, ntimesteps))
     
-    hospitalization_index_region = np.ones(nregions)
-    hospitalization_index = np.ones(ntimesteps)
+    hospitalization_index_region = np_ones(nregions)
+    hospitalization_index = np_ones(ntimesteps)
     
-    susceptible_over_time = np.zeros((nregions, ntimesteps))
+    susceptible_over_time = np_zeros((nregions, ntimesteps))
     susceptible_over_time[:,0] = [e.S for e in epi]
     
-    exposed_over_time = np.zeros((nregions, ntimesteps))
-    exposed_over_time[:,0] = [np.sum(e.E) for e in epi]
+    exposed_over_time = np_zeros((nregions, ntimesteps))
+    exposed_over_time[:,0] = [np_sum(e.E) for e in epi]
     
-    infective_over_time = np.zeros((nregions, ntimesteps))
-    infective_over_time[:,0] = [np.sum(e.I_nr + e.I_r) for e in epi]
+    infective_over_time = np_zeros((nregions, ntimesteps))
+    infective_over_time[:,0] = [np_sum(e.I_nr + e.I_r) for e in epi]
     
-    comm_spread_frac_over_time = np.zeros((nregions, ntimesteps))
+    comm_spread_frac_over_time = np_zeros((nregions, ntimesteps))
     comm_spread_frac_over_time[:,0] = [e.comm_spread_frac for e in epi]
     
     
@@ -183,7 +184,7 @@ def epidemiology_model():
             new_deaths_over_time[j,i] = epi[j].new_deaths
             deaths[j] += epi[j].new_deaths
             susceptible_over_time[j,i] = epi[j].S
-            exposed_over_time[j,i] = np.sum(epi[j].E)
+            exposed_over_time[j,i] = np_sum(epi[j].E)
             infective_over_time[j,i] = epi[j].Itot
             deaths_over_time[j,i] = deaths[j]
             recovered_over_time[j,i] = epi[j].R
@@ -192,7 +193,7 @@ def epidemiology_model():
             mortality_rate_over_time[j,i] = epi[j].curr_mortality_rate
             hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * epi[j].Itot/baseline_hosp[j]
             
-        hospitalization_index[i] = np.amax(hospitalization_index_region)
+        hospitalization_index[i] = np_amax(hospitalization_index_region)
         
     return nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, \

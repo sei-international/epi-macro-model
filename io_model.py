@@ -7,7 +7,7 @@ Created on Mon Feb 15 16:25:57 2021
 
 import numpy as np
 import numpy.linalg as la
-import pandas as pd
+from pandas import Series, DataFrame, read_csv
 import yaml
 
 class IO_model:
@@ -16,7 +16,7 @@ class IO_model:
         with open(io_params_file) as file:
             io_params = yaml.full_load(file)
         
-        csv_data = pd.read_csv(io_params['input-file']['name'],
+        csv_data = read_csv(io_params['input-file']['name'],
                                sep = io_params['input-file']['delimiter'],
                                quotechar = io_params['input-file']['quote-character'],
                                index_col = 0)
@@ -40,9 +40,9 @@ class IO_model:
         self.sectors = list(sector_aggr.keys())
         self.sectors_non_tradeable = list(non_tradeables.keys())
         self.sectors_tradeable = list(tradeables.keys())
-        self.interind = pd.DataFrame(index = self.sectors, columns = self.sectors)
-        self.findem = pd.DataFrame(index = self.sectors, columns = list(findem_data))
-        self.wages = pd.DataFrame(index = self.sectors, columns = [io_params['wages']])
+        self.interind = DataFrame(index = self.sectors, columns = self.sectors)
+        self.findem = DataFrame(index = self.sectors, columns = list(findem_data))
+        self.wages = DataFrame(index = self.sectors, columns = [io_params['wages']])
 
         # For later use, create an identity matrix
         self.ident = np.identity(len(self.sectors))
@@ -59,7 +59,7 @@ class IO_model:
         
         self.G = self.findem[io_params['final-demand']['government']]
         self.H = self.findem[io_params['final-demand']['household']]
-        self.H0 = pd.Series(data = 0.0, index = self.H.index)
+        self.H0 = Series(data = 0.0, index = self.H.index)
         min_hh_dom_shares = io_params['sectors']['min-hh-dom-share']
         for s in min_hh_dom_shares:
             self.H0[s] = min_hh_dom_shares[s] * self.H[s]
@@ -91,7 +91,7 @@ class IO_model:
         self.A = np.divide(self.interind, self.Y)
         # Leontief matrix is corrected by the import propensity for intermediate goods
         self.Leontief = (self.ident - np.matmul((self.ident - np.diag(self.m_A)), self.A)).astype('float')
-        self.Leontief = pd.DataFrame(la.inv(self.Leontief), index = self.sectors, columns = self.sectors)
+        self.Leontief = DataFrame(la.inv(self.Leontief), index = self.sectors, columns = self.sectors)
         
         
         self.I = sum(inv_expend)/self.timesteps_per_year
@@ -102,7 +102,7 @@ class IO_model:
         self.W = self.wages[io_params['wages']]      
         
         # Capital depreciation (annual rate)
-        self.delta_ann = np.divide(1.0, pd.Series(io_params['sectors']['typical-lifetime'], index = sector_aggr))
+        self.delta_ann = np.divide(1.0, Series(io_params['sectors']['typical-lifetime'], index = sector_aggr))
         # Correct for time steps per year
         self.delta = (1 + self.delta_ann)**(1/self.timesteps_per_year) - 1
         
@@ -110,11 +110,11 @@ class IO_model:
         self.gamma_ann = io_params['target-growth-rate']
         # Correct for time steps per year
         self.gamma = (1 + self.gamma_ann)**(1/self.timesteps_per_year) - 1
-        self.Ygr = pd.Series(data = self.gamma, index = self.sectors)
-        self.Wgr = pd.Series(data = self.gamma, index = self.sectors)
+        self.Ygr = Series(data = self.gamma, index = self.sectors)
+        self.Wgr = Series(data = self.gamma, index = self.sectors)
         
         # Initialize utilization and related variables
-        self.u = pd.Series(data = io_params['sectors']['initial-utilization'], index = self.sectors)
+        self.u = Series(data = io_params['sectors']['initial-utilization'], index = self.sectors)
         epsilon = self.gamma * io_params['calib']['threshold-util']/(1 - io_params['calib']['threshold-util'])
         self.phi = 1 - epsilon
         self.Ypot = np.divide(self.Y, self.u)
@@ -147,7 +147,6 @@ class IO_model:
         return self.H - np.multiply(self.m_H, self.H - self.H0) + self.G + self.X
         
     def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance):
-        # TODO: Replace this stub, where everything grows at the constant target rate
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
         self.G *= (1 + self.gamma)

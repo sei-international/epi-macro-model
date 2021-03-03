@@ -1,7 +1,6 @@
-import numpy as np
-from scipy import special as sp
+from numpy import array as np_array, zeros as np_zeros, sum as np_sum
+from scipy.special import betainc as betainc
 import yaml
-import math
 
 class SEIR_matrix:
     def __init__(self, seir_params_file: str, region: dict):
@@ -45,9 +44,9 @@ class SEIR_matrix:
 
         self.invisible_fraction = seir_params['unobserved fraction of cases']
     
-        self.inf2rd_nr = np.array(seir_params['matrix-params']['prob recover or death given infected']['not at risk'])
-        self.inf2rd_r = np.array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
-        self.exp2inf = np.array(seir_params['matrix-params']['prob infected given exposed'])
+        self.inf2rd_nr = np_array(seir_params['matrix-params']['prob recover or death given infected']['not at risk'])
+        self.inf2rd_r = np_array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
+        self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
         
         #-------------------------------------------------------------------
         # Parameters for the statistical model
@@ -98,10 +97,10 @@ class SEIR_matrix:
         self.N_prev = self.N
 
         # Exposed
-        self.E = np.zeros(self.exposed_time_period + 1)
+        self.E = np_zeros(self.exposed_time_period + 1)
         # Infected, either not at risk (nr) or at risk (r)
-        self.I_nr = np.zeros(self.infective_time_period + 1)
-        self.I_r = np.zeros(self.infective_time_period + 1)
+        self.I_nr = np_zeros(self.infective_time_period + 1)
+        self.I_r = np_zeros(self.infective_time_period + 1)
         
         self.E[1] = 0.0
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
@@ -143,7 +142,7 @@ class SEIR_matrix:
 
         """
 
-        return 1 - sp.betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
+        return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
     
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float) -> tuple:
         """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
@@ -180,8 +179,8 @@ class SEIR_matrix:
         hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.ave_fraction_of_visible_requiring_hospitalization
         
         # Calculate mean exceedence fraction assuming a beta distribution
-        mean_exceedance_per_infected_fraction = 1 - sp.betainc(alpha + 1, beta, hospital_p_i_threshold) - \
-                    (hospital_p_i_threshold/(infected_fraction + self.eps)) * (1 - sp.betainc(alpha, beta, hospital_p_i_threshold))
+        mean_exceedance_per_infected_fraction = 1 - betainc(alpha + 1, beta, hospital_p_i_threshold) - \
+                    (hospital_p_i_threshold/(infected_fraction + self.eps)) * (1 - betainc(alpha, beta, hospital_p_i_threshold))
         
         # Baseline fraction
         v = 1 - self.invisible_fraction
@@ -295,7 +294,7 @@ class SEIR_matrix:
             self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
             self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.Itot_prev = self.Itot
-        self.Itot = np.sum(self.I_nr) + np.sum(self.I_r)
+        self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
         
         #------------------------------------------------------------------------------------------------
         # 2: Separate recovered and deceased into recovered/deceased pools and update total population

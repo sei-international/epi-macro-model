@@ -4,8 +4,8 @@ Created on Thu Feb 18 13:10:09 2021
 
 @author: Eric
 """
-import numpy as np
-import pandas as pd
+from numpy import array as np_array, empty as np_empty, zeros as np_zeros, interp as np_interp
+from pandas import DataFrame
 import yaml
 from io_model import IO_model
 from common import Window, timesteps_between_dates, get_datetime_array
@@ -40,37 +40,37 @@ def macroeconomic_model(epi_datetime_array, hospitalization_index):
     
     # Global GDP
     global_GDP_points = common_params['global GDP trajectory']
-    timesteps_array = np.array(range(0,nsteps))
-    global_GDP_ts = np.empty(len(global_GDP_points))
-    global_GDP_rate = np.empty(len(global_GDP_points))
+    timesteps_array = np_array(range(0,nsteps))
+    global_GDP_ts = np_empty(len(global_GDP_points))
+    global_GDP_rate = np_empty(len(global_GDP_points))
     for i in range(0,len(global_GDP_points)):
         global_GDP_ts[i] = timesteps_between_dates(common_params['time']['start date'], global_GDP_points[i][0], x.days_per_timestep)
         global_GDP_rate[i] = global_GDP_points[i][1]
-    global_GDP_gr = (1 + np.interp(timesteps_array, global_GDP_ts, global_GDP_rate))**(1/x.timesteps_per_year) - 1
+    global_GDP_gr = (1 + np_interp(timesteps_array, global_GDP_ts, global_GDP_rate))**(1/x.timesteps_per_year) - 1
     
-    util = pd.DataFrame(columns = x.sectors, index = range(0,nsteps))
+    util = DataFrame(columns = x.sectors, index = range(0,nsteps))
     util.loc[0] = 1
-    VA = pd.DataFrame(columns = x.sectors, index = range(0,nsteps))
+    VA = DataFrame(columns = x.sectors, index = range(0,nsteps))
     VA.loc[0] = x.get_value_added()
-    GDP = np.zeros(nsteps)
+    GDP = np_zeros(nsteps)
     GDP[0] = x.get_value_added().sum()
-    GDP_gr = np.zeros(nsteps)
+    GDP_gr = np_zeros(nsteps)
     GDP_gr[0] = x.gamma_ann
-    GDP_ref = np.zeros(nsteps)
+    GDP_ref = np_zeros(nsteps)
     GDP_ref[0] = GDP[0]
-    X = np.zeros(nsteps)
+    X = np_zeros(nsteps)
     X[0] = x.X.sum()
-    X_gr = np.zeros(nsteps)
+    X_gr = np_zeros(nsteps)
     X_gr[0] = x.gamma_ann
-    F = np.zeros(nsteps)
+    F = np_zeros(nsteps)
     F[0] = x.F.sum()
-    F_gr = np.zeros(nsteps)
+    F_gr = np_zeros(nsteps)
     F_gr[0] = x.gamma_ann
-    I = np.zeros(nsteps)
+    I = np_zeros(nsteps)
     I[0] = x.I
-    I_gr = np.zeros(nsteps)
+    I_gr = np_zeros(nsteps)
     I_gr[0] = x.gamma_ann
-    u_ave = np.zeros(nsteps)
+    u_ave = np_zeros(nsteps)
     u_ave[0] = 1
     for t in range(1, nsteps):
         PHA_demand_reduction_mult = 1

@@ -1,7 +1,6 @@
-
 ###############################################################
 #
-# Start/end time in days
+# Input-output configuration file
 #
 ###############################################################
 days-per-time-step: 7 # 30.42
@@ -10,7 +9,7 @@ target-growth-rate: 0.060 # Annual target growth rate
 
 input-file:
     name: GHA_IO_2015.csv
-    delimiter: ','
+    delimiter: ',' # For tab-separated, use "\t"
     quote-character: '"'
     
 monetary-units:
@@ -117,7 +116,7 @@ sectors:
         transp: 20
         necessities: 20
         other_tr: 30
-    initial-utilization: # Full utilization at normal capacity normalized to 1.0
+    initial-utilization: # Full utilization at normal capacity = 1.0
         construction: 1.0
         food_nt: 1.0
         public_facing: 1.0
@@ -132,14 +131,14 @@ sectors:
         necessities: 1.0
         other_tr: 1.0
     global-GDP-elasticity-of-exports:
-        food_exports: 2.1 # 1.5
-        oil_mining: 2.1 # 1.5
-        accom_foodserv: 2.1 # 1.5
-        bus_serv: 2.1 # 1.2
-        machinery: 2.1 # 1.0
-        transp: 2.1 # 1.5
-        necessities: 2.1 # 1.0
-        other_tr: 2.1 # 1.0
+        food_exports: 2.0
+        oil_mining: 2.0
+        accom_foodserv: 2.5
+        bus_serv: 1.2
+        machinery: 1.0
+        transp: 2.0
+        necessities: 1.0
+        other_tr: 1.0
 
 # Calibration parameters
 calib:
@@ -151,11 +150,14 @@ calib:
 #-------------------------------------------
 # The sectors under "public-health-response" should differ from "hospitalization-sensitivity"
 public-health-response:
-    social-distance-sensitivity: # Fractional reduction in final demand when social distancing fully effective
+    # Fractional reduction in final demand when social distancing fully effective
+    social-distance-sensitivity:
         public_facing: 0.05
         accom_foodserv: 0.10
         transp: 0.02
-    travel-ban-sensitivity: # Fractional reduction in final demand when travel bans are in place
+    # Fractional reduction in final demand when travel bans are in place
+    travel-ban-sensitivity:
         accom_foodserv: 0.10
-hospitalization-sensitivity: # Fractional increase/reduction in final demand due to excess/deficit hospital visits
+# Fractional increase/reduction in final demand due to excess/deficit hospital visits
+hospitalization-sensitivity:
     health_socwork: 0.05

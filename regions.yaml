@@ -9,7 +9,8 @@
     population: 16.5e+06
     beds per 1000: 0.9 # Most recent data available in 2011
     infected fraction: 0.006 # Per 1000 population
-    population with community spread: 0.15 # As fraction of population: This is population of Accra metropolis/total
+    # This is population of Accra metropolis/total
+    population with community spread: 0.15 # As fraction of population
   # Probability of an individual moving from one locality to another per day
   between locality mobility rate: 0.01
   between region mobility rate: 0.001
@@ -22,7 +23,7 @@
     population: 12.9e+06
     beds per 1000: 0.9 # Assume same in both regions
     infected fraction: 0
-    population with community spread: 0 #0.168 # As a fraction of total population
+    population with community spread: 0 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
   between locality mobility rate: 0.0001
   between region mobility rate: 0.0001
