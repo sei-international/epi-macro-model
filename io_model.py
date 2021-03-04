@@ -60,9 +60,10 @@ class IO_model:
         self.G = self.findem[io_params['final-demand']['government']]
         self.H = self.findem[io_params['final-demand']['household']]
         self.H0 = Series(data = 0.0, index = self.H.index)
-        min_hh_dom_shares = io_params['sectors']['min-hh-dom-share']
-        for s in min_hh_dom_shares:
-            self.H0[s] = min_hh_dom_shares[s] * self.H[s]
+        if 'min-hh-dom-share' in io_params['sectors']:
+            min_hh_dom_shares = io_params['sectors']['min-hh-dom-share']
+            for s in min_hh_dom_shares:
+                self.H0[s] = min_hh_dom_shares[s] * self.H[s]
 
         # Ensure non-tradeables have zero X & M
         self.X = self.findem[io_params['final-demand']['exports']]
@@ -131,6 +132,7 @@ class IO_model:
         # Public health parameters
         #-----------------------------------------------
         self.soc_dist_sens = io_params['public-health-response']['social-distance-sensitivity']
+        self.trav_ban_sens = io_params['public-health-response']['travel-ban-sensitivity']
         self.hosp_sens = io_params['hospitalization-sensitivity']
         self.max_util = 1.05 # Max utilization exceedance
         
@@ -146,16 +148,18 @@ class IO_model:
     def desired_final_demand(self):
         return self.H - np.multiply(self.m_H, self.H - self.H0) + self.G + self.X
         
-    def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance):
+    def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance, trav_ban):
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
         self.G *= (1 + self.gamma)
         for s in self.sectors_tradeable:
             self.X[s] *= 1 + self.gamma + delta_global_GDP_gr * self.global_GDP_elast_of_X[s]
         self.F = self.desired_final_demand()
-        # Now correct for social distancing
+        # Now correct for social distancing and travel bans
         for s in self.soc_dist_sens:
             self.F *= 1 - soc_distance * self.soc_dist_sens[s]
+        for s in self.trav_ban_sens:
+            self.F *= 1 - trav_ban * self.trav_ban_sens[s]
         # And hospitalization sensitivity
         for s in self.hosp_sens:
             self.F *= 1 + (hospitalization_index - 1) * self.hosp_sens[s]
@@ -187,9 +191,9 @@ class IO_model:
         self.W = np.multiply(self.W, 1 + self.Ygr)
         self.Wgr = self.W.sum()/Wprev - 1
         
-    def update(self, delta_global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0):
+    def update(self, delta_global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0, trav_ban = 0.0):
         # These must occur in this order:
-        self.update_desired_final_demand(delta_global_GDP_gr, hospitalization_index, soc_distance)
+        self.update_desired_final_demand(delta_global_GDP_gr, hospitalization_index, soc_distance, trav_ban)
         self.update_utilization(hospitalization_index)
         self.update_wages()
         self.t += 1

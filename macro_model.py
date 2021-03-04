@@ -73,11 +73,12 @@ def macroeconomic_model(epi_datetime_array, hospitalization_index):
     u_ave = np_zeros(nsteps)
     u_ave[0] = 1
     for t in range(1, nsteps):
-        PHA_demand_reduction_mult = 1
+        PHA_soc_demand_reduction_mult = 0
         for w in soc_dist_windows:
-            PHA_demand_reduction_mult *= (1 - w.window(t))
+            PHA_soc_demand_reduction_mult += w.window(t)
+        PHA_trav_demand_reduction_mult = 0
         for w in travel_ban_windows:
-            PHA_demand_reduction_mult *= (1 - w.window(t))
+            PHA_trav_demand_reduction_mult += w.window(t)
         
         if macro_datetime_array[t] < epi_datetime_array[0]:
             hosp_index = 1
@@ -85,7 +86,7 @@ def macroeconomic_model(epi_datetime_array, hospitalization_index):
             hosp_index = hospitalization_index[epi_datetime_array.index(macro_datetime_array[t])]
             
         # Advance one timestep
-        x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, 1 - PHA_demand_reduction_mult)
+        x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, PHA_soc_demand_reduction_mult, PHA_trav_demand_reduction_mult)
         
         GDP[t] = x.get_value_added().sum()
         GDP_gr[t] = (GDP[t]/GDP[t-1])**x.timesteps_per_year - 1

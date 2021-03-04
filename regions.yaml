@@ -3,22 +3,21 @@
 # Regions
 #
 ###############################################################
-- name: Greater Accra and Ashanti
-  number of localities: 72 #  29 districts in Greater Accra + 43 districts in Ashanti
+- name: Ports of entry
+  number of localities: 72 #  Total districts in provinces containing ports of entry
   initial:
     population: 16.5e+06
-    beds per 1000: 0.9 # Most recent data available in 2011
+    beds per 1000: 0.9
     infected fraction: 0.006 # Per 1000 population
-    # This is population of Accra metropolis/total
     population with community spread: 0.15 # As fraction of population
   # Probability of an individual moving from one locality to another per day
   between locality mobility rate: 0.01
   between region mobility rate: 0.001
   international travel:
-      daily arrivals: 5782 # 2019 data from LSE report
+      daily arrivals: 6000
       duration of stay: 7 # Assume 1 week/visitor
-- name: Other regions
-  number of localities: 188 # The remaining 188 districts
+- name: Other provinces
+  number of localities: 200 # The remaining districts
   initial:
     population: 12.9e+06
     beds per 1000: 0.9 # Assume same in both regions

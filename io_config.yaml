@@ -3,161 +3,92 @@
 # Input-output configuration file
 #
 ###############################################################
-days-per-time-step: 7 # 30.42
+days-per-time-step: 7 # week: 7; month: 30.42; quarter: 91.26
 
-target-growth-rate: 0.060 # Annual target growth rate
+target-growth-rate: 0.035 # Annual target growth rate
 
 input-file:
-    name: GHA_IO_2015.csv
-    delimiter: ',' # For tab-separated, use "\t"
+    name: input_output_data.csv
+    delimiter: ',' # Use "\t" for a tab-separated file
     quote-character: '"'
     
 monetary-units:
     scale: 1.0e+6 # Note that both the ".0" and "+" sign are required
-    currency: Ghanaian Cedis
+    currency: Local Currency
 
 final-demand:
     # Note that imports should be negative
-    household: households
-    government: government
-    investment: investment
-    exports: exports
-    imports: imports
+    household: Personal consumption expenditures
+    government: Government consumption expenditures and gross investment
+    investment: Private fixed investment
+    exports: Exports of goods and services
+    imports: Imports of goods and services
 
-wages: wage bill
-
+wages: Compensation of employees
 
 sectors:
-    count: 55
+    count: 15
     non-tradeables:
         construction:
-            - acons
-        food_nt:
-            - amaiz
-            - asorg
-            - apuls
-            - agnut
-            - acass
-            - aroot
-            - avege
-            - asugr
-            - atoba
-            - acatt
-            - apoul
-            - aoliv
-            - afish
+            - Construction
         public_facing:
-            - atrad
-            - aosrv
-        health_socwork:
-            - aheal
-        other_nt:
-            - aeduc
-            - areal
-            - afsrv
-            - aelec
-            - awatr
-            - afore
-            - acomm
+            - Retail trade
+            - Arts, entertainment, recreation, accommodation, and food services
+        social_support:
+            - Educational services, health care, and social assistance
+            - Government
     tradeables:
-        food_exports:
-            - afoil
-            - aocrp
-            - acoff
-            - acoco
-            - afveg
-            - aoils
-            - acott
-            - afrui
-        oil_mining:
-            - acoil
-            - aomin
-            - apetr
-        accom_foodserv:
-            - ahotl
-        bus_serv:
-            - absrv
-        machinery:
-            - amach
-        transp:
-            - atran
         necessities:
-            - arice
-            - ameat
-            - agmll
-            - asref
-            - abeve
-            - aptob
-            - atext
-            - aclth
-            - aleat
-            - afood
-        other_tr:
-            - aoman
-            - apadm
-            - achem
-            - anmet
-            - ametl
-            - awood
+            - Agriculture, forestry, fishing, and hunting
+            - Utilities
+        industry:
+            - Mining
+            - Manufacturing
+        other:
+            - Wholesale trade
+            - Transportation and warehousing
+            - Information
+            - Finance, insurance, real estate, rental, and leasing
+            - Professional and business services
+            - Other services, except government
     min-hh-dom-share:
         necessities: 0.20
-        transp: 0.20
     typical-lifetime: # In years
         construction: 20
-        food_nt: 15
         public_facing: 15
-        health_socwork: 15
-        other_nt: 15
-        food_exports: 15
-        oil_mining: 30
-        accom_foodserv: 15
-        bus_serv: 15
-        machinery: 30
-        transp: 20
+        social_support: 20
         necessities: 20
-        other_tr: 30
+        industry: 30
+        other: 20
     initial-utilization: # Full utilization at normal capacity = 1.0
         construction: 1.0
-        food_nt: 1.0
         public_facing: 1.0
-        health_socwork: 1.0
-        other_nt: 1.0
-        food_exports: 1.0
-        oil_mining: 1.0
-        accom_foodserv: 1.0
-        bus_serv: 1.0
-        machinery: 1.0
-        transp: 1.0
+        social_support: 1.0
         necessities: 1.0
-        other_tr: 1.0
+        industry: 1.0
+        other: 1.0
     global-GDP-elasticity-of-exports:
-        food_exports: 2.0
-        oil_mining: 2.0
-        accom_foodserv: 2.5
-        bus_serv: 1.2
-        machinery: 1.0
-        transp: 2.0
         necessities: 1.0
-        other_tr: 1.0
+        industry: 1.2
+        other: 1.2
 
 # Calibration parameters
 calib:
     # A utilization level below which firms replace capital equipment but do not otherwise invest
     threshold-util: 0.7
-
+    
 #-------------------------------------------
 # COVID-related parameters
 #-------------------------------------------
 # The sectors under "public-health-response" should differ from "hospitalization-sensitivity"
 public-health-response:
-    # Fractional reduction in final demand when social distancing fully effective
+# Fractional reduction in final demand when social distancing fully effective
     social-distance-sensitivity:
-        public_facing: 0.05
-        accom_foodserv: 0.10
-        transp: 0.02
+        public_facing: 0.10
+        other: 0.05
     # Fractional reduction in final demand when travel bans are in place
     travel-ban-sensitivity:
-        accom_foodserv: 0.10
+        public_facing: 0.05
 # Fractional increase/reduction in final demand due to excess/deficit hospital visits
 hospitalization-sensitivity:
-    health_socwork: 0.05
+    social_support: 0.1

@@ -44,7 +44,10 @@ def epidemiology_model():
     normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
     max_reduction_in_normal_bed_occupancy = common_params['bed occupancy']['max reduction']
     
-    vaccinate_at_risk = common_params['vaccination']['vaccinate at risk first']
+    if 'vaccinate at risk first' in common_params['vaccination']:
+        vaccinate_at_risk = common_params['vaccination']['vaccinate at risk first']
+    else:
+        vaccinate_at_risk = False
     avoid_elective_operations= common_params['avoid elective operations']
     
     # Global infection rate per person

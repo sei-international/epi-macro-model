@@ -76,30 +76,30 @@ test and trace:
         ramp down for: 31
 
 social distance:
-    # This was an official lockdown -- adds to a baseline level (below)
+    # An official lockdown -- adds to a baseline level (below)
     -   apply: true
-        effectiveness: 0.40 # + 0.10 = 0.50
+        effectiveness: 0.40 # + 0.05 = 0.45
         start date: {year: 2020, month: 3, day: 12}
         ramp up for: 15 # days
         end date: {year: 2020, month: 5, day: 31}
         ramp down for: 5 # days
     # This is ongoing, baseline, social distancing
     -   apply: true
-        effectiveness: 0.10
+        effectiveness: 0.05
         start date: {year: 2020, month: 3, day: 12}
         ramp up for: 15 # days
         end date: {year: 2021, month: 12, day: 31}
         ramp down for: 15 # days
     # Assume ramp up again after February 2021
     -   apply: true
-        effectiveness: 0.40 # + 0.10 = 0.50
+        effectiveness: 0.35 # + 0.05 = 0.40
         start date: {year: 2020, month: 12, day: 15}
         ramp up for: 15 # days
         end date: {year: 2021, month: 12, day: 31}
         ramp down for: 5 # days
         
 international travel restrictions:
-    # Kotoka airport was closed to international travel
+    # Airport closure
     -   apply: true
         ban: true
         effectiveness: 1.00
@@ -107,7 +107,7 @@ international travel restrictions:
         ramp up for: 1 # days
         end date: {year: 2020, month: 9, day: 1}
         ramp down for: 1 # days
-    # This attempts to simulate the test-before-entry regime after reopening Kotoka airport
+    # Test-before-entry regime
     -   apply: true
         ban: false
         effectiveness: 0.90
