@@ -15,11 +15,6 @@ class SEIR_matrix:
             Number of localities and region population as a dict with keys
 
 
-        Raises
-        ------
-        RuntimeError
-            Checks to ensure that two lists that must be the same length in the seir_params_file are the same length.
-
         Returns
         -------
         None.
@@ -39,13 +34,12 @@ class SEIR_matrix:
         self.R0 = seir_params['R0']
         self.k = seir_params['k factor']
         self.population_at_risk_frac = seir_params['population at risk fraction']
-        self.case_fatality_rate = seir_params['case fatality rate']['not at risk']
-        self.case_fatality_rate_at_risk = seir_params['case fatality rate']['at risk']
+        self.case_fatality_rate_nr = seir_params['case fatality rate']['not at risk']
+        self.case_fatality_rate_r = seir_params['case fatality rate']['at risk']
 
         self.invisible_fraction = seir_params['unobserved fraction of cases']
     
-        self.inf2rd_nr = np_array(seir_params['matrix-params']['prob recover or death given infected']['not at risk'])
-        self.inf2rd_r = np_array(seir_params['matrix-params']['prob recover or death given infected']['at risk'])
+        self.inf2rd = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
         
         #-------------------------------------------------------------------
@@ -60,22 +54,18 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Calculated parameters based on imported parameters
         #-------------------------------------------------------------------
-        # The not-at-risk and at-risk vectors should be the same length
-        if len(self.inf2rd_r) != len(self.inf2rd_nr):
-            raise RuntimeError("The not-at-risk and at-risk 'prob recover or death given infected' arrays must be the same length")
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
-        self.infective_time_period = len(self.inf2rd_nr)
+        self.infective_time_period = len(self.inf2rd)
         self.exposed_time_period = len(self.exp2inf)
         # Mean infectious period is calculated based on the matrix model
         self.mean_infectious_period = 0
         P = 1
         for i in range(1,self.infective_time_period):
-            ave_rate = (1 - self.population_at_risk_frac) * self.inf2rd_nr[i - 1] + self.population_at_risk_frac * self.inf2rd_r[i - 1]
-            self.mean_infectious_period += (i + 1) * P * ave_rate
-            P *= 1 - ave_rate
+            self.mean_infectious_period += (i + 1) * P * self.inf2rd[i - 1]
+            P *= 1 - self.inf2rd[i - 1]
             
-        self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate / fraction_of_visible_requiring_hospitalization_nr
-        self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_at_risk / fraction_of_visible_requiring_hospitalization_r
+        self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate_nr / fraction_of_visible_requiring_hospitalization_nr
+        self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_r / fraction_of_visible_requiring_hospitalization_r
         
         self.ave_fraction_of_visible_requiring_hospitalization = (1 - self.population_at_risk_frac) * fraction_of_visible_requiring_hospitalization_nr + \
                                         self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r
@@ -96,13 +86,15 @@ class SEIR_matrix:
         self.Itot_prev = initial_infected
         self.N_prev = self.N
 
-        # Exposed
-        self.E = np_zeros(self.exposed_time_period + 1)
+        # Exposed, either not at risk (nr) or at risk (r)
+        self.E_nr = np_zeros(self.exposed_time_period + 1)
+        self.E_r = np_zeros(self.exposed_time_period + 1)
         # Infected, either not at risk (nr) or at risk (r)
         self.I_nr = np_zeros(self.infective_time_period + 1)
         self.I_r = np_zeros(self.infective_time_period + 1)
         
-        self.E[1] = 0.0
+        self.E_nr[1] = 0.0
+        self.E_r[1] = 0.0
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
         self.I_r[1] = self.population_at_risk_frac * initial_infected
         
@@ -186,7 +178,7 @@ class SEIR_matrix:
         v = 1 - self.invisible_fraction
         h = self.ave_fraction_of_visible_requiring_hospitalization
         overflow_corr = (1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor
-        # Rate for population not at risk
+        # Rate for population not at risk and at risk
         m_nr = v * h * overflow_corr * self.baseline_hospitalized_mortality_rate_nr
         m_r = v * h * overflow_corr * self.baseline_hospitalized_mortality_rate_r
         
@@ -235,7 +227,7 @@ class SEIR_matrix:
         
         return pub_health_factor * adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
 
-    def vaccinations(self, max_vaccine_doses: float) -> float:
+    def vaccinations(self, max_vaccine_doses: float, vaccinate_at_risk_first: bool) -> float:
         """
         
 
@@ -247,11 +239,18 @@ class SEIR_matrix:
         Returns
         -------
         Population removed from susceptible and added to recovered pool.
+        
+        Side effects
+        ------------
+        Updates population_at_risk_frac
 
         """
-        # TODO: Preferentially vaccinate at-risk population
         
-        return min(self.S, max_vaccine_doses)
+        vaccinations = min(self.S, max_vaccine_doses)
+        if vaccinate_at_risk_first:
+            self.population_at_risk_frac = max(0, self.population_at_risk_frac * self.S - vaccinations)/(self.S + self.eps)
+        
+        return vaccinations
         
 
     def update(self, infected_visitors: float,
@@ -259,7 +258,8 @@ class SEIR_matrix:
                pub_health_factor: float,
                bed_occupancy_fraction: float,
                beds_per_1000: float,
-               max_vaccine_doses: float):
+               max_vaccine_doses: float,
+               vaccinate_at_risk_first: bool):
         """
         
 
@@ -289,10 +289,10 @@ class SEIR_matrix:
         recovered_or_deceased_nr = self.I_nr[self.infective_time_period]
         recovered_or_deceased_r = self.I_r[self.infective_time_period]
         for j in range(self.infective_time_period,1,-1):
-            recovered_or_deceased_nr = recovered_or_deceased_nr + self.inf2rd_nr[j-1]*self.I_nr[j-1]
-            recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd_r[j-1]*self.I_r[j-1]
-            self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
-            self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
+            recovered_or_deceased_nr = recovered_or_deceased_nr + self.inf2rd[j-1]*self.I_nr[j-1]
+            recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd[j-1]*self.I_r[j-1]
+            self.I_nr[j] = (1 - self.inf2rd[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.inf2rd[j-1]) * self.I_r[j-1]
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
         
@@ -316,22 +316,26 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         # 3: Update new infections and shift exposed pool
         #------------------------------------------------------------------------------------------------
-        self.I_nr[1] = (1 - self.population_at_risk_frac) * self.E[self.exposed_time_period]
-        self.I_r[1] = self.population_at_risk_frac * self.E[self.exposed_time_period]
+        self.I_nr[1] = self.E_nr[self.exposed_time_period]
+        self.I_r[1] = self.E_r[self.exposed_time_period]
         for j in range(self.exposed_time_period, 1, -1):
-            new_infected = self.exp2inf[j-1] * self.E[j - 1]
-            self.E[j] = self.E[j - 1] - new_infected
-            self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected
-            self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected
+            new_infected_nr = self.exp2inf[j-1] * self.E_nr[j - 1]
+            new_infected_r = self.exp2inf[j-1] * self.E_r[j - 1]
+            self.E_nr[j] = self.E_nr[j - 1] - new_infected_nr
+            self.E_r[j] = self.E_r[j - 1] - new_infected_r
+            self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected_nr
+            self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected_r
         
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
-        self.E[1] = self.social_exposure_rate(infected_visitors, pub_health_factor) * self.S
+        soc_exp_rate = self.social_exposure_rate(infected_visitors, pub_health_factor)
+        self.E_nr[1] = (1 - self.population_at_risk_frac) * soc_exp_rate * self.S
+        self.E_r[1] = self.population_at_risk_frac * soc_exp_rate * self.S
         self.S_prev = self.S
-        self.S -= self.E[1]
+        self.S -= self.E_nr[1] + self.E_r[1]
         # Do this update after accounting for newly exposed
-        vaccinated = self.vaccinations(max_vaccine_doses)
+        vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= vaccinated
         self.R += vaccinated
 

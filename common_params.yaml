@@ -116,6 +116,7 @@ international travel restrictions:
 
 vaccination:
     time to efficacy: 3 # weeks
+    vaccinate at risk first: true
     maximum doses per day:
         - [{year: 2021, month: 7, day: 1}, 0]
         - [{year: 2021, month: 7, day: 31}, 1000]

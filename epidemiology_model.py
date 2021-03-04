@@ -44,7 +44,7 @@ def epidemiology_model():
     normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
     max_reduction_in_normal_bed_occupancy = common_params['bed occupancy']['max reduction']
     
-    
+    vaccinate_at_risk = common_params['vaccination']['vaccinate at risk first']
     avoid_elective_operations= common_params['avoid elective operations']
     
     # Global infection rate per person
@@ -129,7 +129,7 @@ def epidemiology_model():
     susceptible_over_time[:,0] = [e.S for e in epi]
     
     exposed_over_time = np_zeros((nregions, ntimesteps))
-    exposed_over_time[:,0] = [np_sum(e.E) for e in epi]
+    exposed_over_time[:,0] = [np_sum(e.E_nr) + np_sum(e.E_r) for e in epi]
     
     infective_over_time = np_zeros((nregions, ntimesteps))
     infective_over_time[:,0] = [np_sum(e.I_nr + e.I_r) for e in epi]
@@ -178,13 +178,14 @@ def epidemiology_model():
                           public_health_adjustment,
                           bed_occupancy_fraction,
                           beds_per_1000[j],
-                          vaccination_max_doses[i])
+                          vaccination_max_doses[i],
+                          vaccinate_at_risk)
     
             # Update values for indicator graphs
             new_deaths_over_time[j,i] = epi[j].new_deaths
             deaths[j] += epi[j].new_deaths
             susceptible_over_time[j,i] = epi[j].S
-            exposed_over_time[j,i] = np_sum(epi[j].E)
+            exposed_over_time[j,i] = np_sum(epi[j].E_nr) + np_sum(epi[j].E_r)
             infective_over_time[j,i] = epi[j].Itot
             deaths_over_time[j,i] = deaths[j]
             recovered_over_time[j,i] = epi[j].R
