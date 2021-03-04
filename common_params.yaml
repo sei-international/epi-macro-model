@@ -59,6 +59,14 @@ isolate symptomatic cases:
         end date: {year: 2021, month: 12, day: 31}
         ramp down for: 31
 
+isolate at risk:
+    -   apply: false
+        fraction of population isolated: 0.70
+        start date: {year: 2020, month: 3, day: 12}
+        ramp up for: 31
+        end date: {year: 2021, month: 12, day: 31}
+        ramp down for: 31
+
 test and trace:
     -   apply: true
         fraction of infectious cases isolated: 0.30

@@ -77,40 +77,54 @@ def epidemiology_model():
     vaccination_max_doses = np_interp(vaccination_timesteps_array, vaccination_ts, vaccination_val)
     
     isolate_symptomatic_cases_windows = []
-    for window in common_params['isolate symptomatic cases']:
-        if window['apply']:
-            isolate_symptomatic_cases_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                                            (get_datetime(window['end date']) - start_datetime).days,
-                                                            window['ramp up for'],
-                                                            window['ramp down for'],
-                                                            (1 - epi_invisible_fraction) * window['fraction of cases isolated']))
+    if 'isolate symptomatic cases' in common_params:
+        for window in common_params['isolate symptomatic cases']:
+            if window['apply']:
+                isolate_symptomatic_cases_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                                                (get_datetime(window['end date']) - start_datetime).days,
+                                                                window['ramp up for'],
+                                                                window['ramp down for'],
+                                                                (1 - epi_invisible_fraction) * window['fraction of cases isolated']))
     
+    isolate_at_risk_windows = []
+    if 'isolate at risk' in common_params:
+        for window in common_params['isolate at risk']:
+            if window['apply']:
+                isolate_at_risk_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                                      (get_datetime(window['end date']) - start_datetime).days,
+                                                      window['ramp up for'],
+                                                      window['ramp down for'],
+                                                      window['fraction of population isolated']))
+
     test_and_trace_windows = []
-    for window in common_params['test and trace']:
-        if window['apply']:
-            test_and_trace_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                                 (get_datetime(window['end date']) - start_datetime).days,
-                                                 window['ramp up for'],
-                                                 window['ramp down for'],
-                                                 window['fraction of infectious cases isolated']))
+    if 'test and trace' in common_params:
+        for window in common_params['test and trace']:
+            if window['apply']:
+                test_and_trace_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                                     (get_datetime(window['end date']) - start_datetime).days,
+                                                     window['ramp up for'],
+                                                     window['ramp down for'],
+                                                     window['fraction of infectious cases isolated']))
     
     soc_dist_windows = []
-    for window in common_params['social distance']:
-        if window['apply']:
-            soc_dist_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                           (get_datetime(window['end date']) - start_datetime).days,
-                                           window['ramp up for'],
-                                           window['ramp down for'],
-                                           window['effectiveness']))
+    if 'social distance' in common_params:
+        for window in common_params['social distance']:
+            if window['apply']:
+                soc_dist_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                               (get_datetime(window['end date']) - start_datetime).days,
+                                               window['ramp up for'],
+                                               window['ramp down for'],
+                                               window['effectiveness']))
     
     travel_restrictions_windows = []
-    for window in common_params['international travel restrictions']:
-        if window['apply']:
-            travel_restrictions_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
-                                           (get_datetime(window['end date']) - start_datetime).days,
-                                           window['ramp up for'],
-                                           window['ramp down for'],
-                                           window['effectiveness']))
+    if 'international travel restrictions' in common_params:
+        for window in common_params['international travel restrictions']:
+            if window['apply']:
+                travel_restrictions_windows.append(Window((get_datetime(window['start date']) - start_datetime).days,
+                                               (get_datetime(window['end date']) - start_datetime).days,
+                                               window['ramp up for'],
+                                               window['ramp down for'],
+                                               window['effectiveness']))
     
     
     # Initialize values for indicator graphs
@@ -149,6 +163,9 @@ def epidemiology_model():
         PHA_isolate_visible_cases = 0
         for w in isolate_symptomatic_cases_windows:
             PHA_isolate_visible_cases += w.window(i)
+        PHA_isolate_at_risk = 0
+        for w in isolate_at_risk_windows:
+            PHA_isolate_at_risk += w.window(i)
         PHA_isolate_infectious_cases = 0
         for w in test_and_trace_windows:
             PHA_isolate_infectious_cases += w.window(i)
@@ -176,6 +193,7 @@ def epidemiology_model():
             epi[j].update(dom_infected_visitors + intl_infected_visitors,
                           between_locality_mobility_rate[j],
                           public_health_adjustment,
+                          PHA_isolate_at_risk,
                           bed_occupancy_fraction,
                           beds_per_1000[j],
                           vaccination_max_doses[i],

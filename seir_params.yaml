@@ -12,12 +12,12 @@ unobserved fraction of cases: 0.87
 population at risk fraction: 0.05 # As a fraction of total population
 
 case fatality rate:
-    not at risk: 0.057
+    average: 0.057
     at risk: 0.070
     overflow hospitalized mortality rate factor: 2
 
 fraction of observed cases requiring hospitalization:
-    not at risk: 0.38
+    average: 0.38
     at risk: 0.60
 
 matrix-params:
@@ -26,6 +26,7 @@ matrix-params:
                                            0.08,0.08,0.09,0.08,0.09,0.1,0.11,
                                            0.12,0.13,0.15,0.18,0.22,0.29,0.06,
                                            0.07,0.07,0.08,0.08,0.09,0.1,0.11]
+    recovery rate for at risk as fraction of not at risk: 0.75
 
 statistical-model:
     coeff of variation of infected where spreading: 0.6

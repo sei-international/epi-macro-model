@@ -33,36 +33,64 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         self.R0 = seir_params['R0']
         self.k = seir_params['k factor']
-        self.population_at_risk_frac = seir_params['population at risk fraction']
-        self.case_fatality_rate_nr = seir_params['case fatality rate']['not at risk']
-        self.case_fatality_rate_r = seir_params['case fatality rate']['at risk']
+        if 'population at risk fraction' in seir_params:
+            self.population_at_risk_frac = seir_params['population at risk fraction']
+        else:
+            self.population_at_risk_frac = 0.0
+        # Given an average x_ave, an at-risk value x_r, and a fraction at risk f_r, have
+        #   x_nr = (x_ave - f_r * x_r)/(1 - f_r)
+        if 'at risk' in seir_params['case fatality rate']:
+            self.case_fatality_rate_r = seir_params['case fatality rate']['at risk']
+            self.case_fatality_rate_nr = (seir_params['case fatality rate']['average'] - self.population_at_risk_frac * self.case_fatality_rate_r)/(1 - self.population_at_risk_frac)
+            if self.case_fatality_rate_nr < 0:
+                raise ValueError("Case fatality arising from at-risk population alone exceeds the average")
+            if self.case_fatality_rate_r < self.case_fatality_rate_nr:
+                raise ValueError("Case fatality rate for at-risk population should exceed the average rate")
+        else:
+            self.case_fatality_rate_nr = seir_params['case fatality rate']['average']
+            self.case_fatality_rate_r = self.case_fatality_rate_nr
 
         self.invisible_fraction = seir_params['unobserved fraction of cases']
     
-        self.inf2rd = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
+
+        inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
+        if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
+            rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
+        else:
+            rr_for_r = 1.0
+        recover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_nr)/(1 - self.case_fatality_rate_r)
+        adj_factor = 1 + (1 + recover_rate_ratio) * self.population_at_risk_frac
+        self.inf2rd_nr = inf2rd_ave/adj_factor
+        self.inf2rd_r = recover_rate_ratio * self.inf2rd_nr
+        if max(self.inf2rd_r) >= 1:
+            raise ValueError("Imputed recovery rate of population at risk exceeds 100% for at least one time step")
         
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
         self.n_loc = region['number of localities']
         self.coeff_of_variation_i= seir_params['statistical-model']['coeff of variation of infected where spreading']
-        fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['not at risk']
-        fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
+        if 'at risk' in seir_params['fraction of observed cases requiring hospitalization']:
+            fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
+            fraction_of_visible_requiring_hospitalization_nr = (seir_params['fraction of observed cases requiring hospitalization']['average'] - self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r)/(1 - self.population_at_risk_frac)
+        else:
+            fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['average']
+            fraction_of_visible_requiring_hospitalization_r = fraction_of_visible_requiring_hospitalization_nr
         self.overflow_hospitalized_mortality_rate_factor = seir_params['case fatality rate']['overflow hospitalized mortality rate factor']
         
         #-------------------------------------------------------------------
         # Calculated parameters based on imported parameters
         #-------------------------------------------------------------------
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
-        self.infective_time_period = len(self.inf2rd)
+        self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
         # Mean infectious period is calculated based on the matrix model
         self.mean_infectious_period = 0
         P = 1
         for i in range(1,self.infective_time_period):
-            self.mean_infectious_period += (i + 1) * P * self.inf2rd[i - 1]
-            P *= 1 - self.inf2rd[i - 1]
+            self.mean_infectious_period += (i + 1) * P * inf2rd_ave[i - 1]
+            P *= 1 - inf2rd_ave[i - 1]
             
         self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate_nr / fraction_of_visible_requiring_hospitalization_nr
         self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_r / fraction_of_visible_requiring_hospitalization_r
@@ -184,7 +212,7 @@ class SEIR_matrix:
         
         return m_nr, m_r
  
-    def social_exposure_rate(self, infected_visitors: float, pub_health_factor: float) -> float:
+    def social_exposure_rate(self, infected_visitors: float, pub_health_factor: float, fraction_at_risk_isolated: float) -> float:
         """ Calculates the effective exposure rate per susceptible individual, taking inhomogeneity into account
         
         Parameters
@@ -225,7 +253,11 @@ class SEIR_matrix:
         cv_corr = self.coeff_of_variation_i**2 * n_i/(self.S_prev + self.eps)
         clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/(self.S_prev + self.eps)
         
-        return pub_health_factor * adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
+        base_rate = adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
+
+        pub_health_factor_r = (1 - fraction_at_risk_isolated * self.population_at_risk_frac) * pub_health_factor
+    
+        return pub_health_factor * base_rate, pub_health_factor_r * base_rate
 
     def vaccinations(self, max_vaccine_doses: float, vaccinate_at_risk_first: bool) -> float:
         """
@@ -256,6 +288,7 @@ class SEIR_matrix:
     def update(self, infected_visitors: float,
                internal_mobility_rate: float,
                pub_health_factor: float,
+               fraction_at_risk_isolated: float,
                bed_occupancy_fraction: float,
                beds_per_1000: float,
                max_vaccine_doses: float,
@@ -289,10 +322,10 @@ class SEIR_matrix:
         recovered_or_deceased_nr = self.I_nr[self.infective_time_period]
         recovered_or_deceased_r = self.I_r[self.infective_time_period]
         for j in range(self.infective_time_period,1,-1):
-            recovered_or_deceased_nr = recovered_or_deceased_nr + self.inf2rd[j-1]*self.I_nr[j-1]
-            recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd[j-1]*self.I_r[j-1]
-            self.I_nr[j] = (1 - self.inf2rd[j-1]) * self.I_nr[j-1]
-            self.I_r[j] = (1 - self.inf2rd[j-1]) * self.I_r[j-1]
+            recovered_or_deceased_nr = recovered_or_deceased_nr + self.inf2rd_nr[j-1]*self.I_nr[j-1]
+            recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd_r[j-1]*self.I_r[j-1]
+            self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
         
@@ -329,9 +362,11 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
-        soc_exp_rate = self.social_exposure_rate(infected_visitors, pub_health_factor)
-        self.E_nr[1] = (1 - self.population_at_risk_frac) * soc_exp_rate * self.S
-        self.E_r[1] = self.population_at_risk_frac * soc_exp_rate * self.S
+        soc_exp_rate_nr, soc_exp_rate_r = self.social_exposure_rate(infected_visitors, pub_health_factor, fraction_at_risk_isolated)
+        self.E_nr[1] = (1 - self.population_at_risk_frac) * soc_exp_rate_nr * self.S
+        self.E_r[1] = self.population_at_risk_frac * soc_exp_rate_r * self.S
+        # Update population at risk fraction if they are proceeding at different rates
+        self.population_at_risk_frac = self.population_at_risk_frac * (1 - soc_exp_rate_r)/(1 - soc_exp_rate_nr + (soc_exp_rate_nr - soc_exp_rate_r) * self.population_at_risk_frac)
         self.S_prev = self.S
         self.S -= self.E_nr[1] + self.E_r[1]
         # Do this update after accounting for newly exposed
