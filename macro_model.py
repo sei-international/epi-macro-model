@@ -40,6 +40,7 @@ def macroeconomic_model(epi_datetime_array, hospitalization_index):
     
     # Global GDP
     global_GDP_points = common_params['global GDP trajectory']
+    global_GDP_gr_trend = (1 + global_GDP_points[len(global_GDP_points) - 1][1])**(1/x.timesteps_per_year) - 1
     timesteps_array = np_array(range(0,nsteps))
     global_GDP_ts = np_empty(len(global_GDP_points))
     global_GDP_rate = np_empty(len(global_GDP_points))
@@ -86,7 +87,7 @@ def macroeconomic_model(epi_datetime_array, hospitalization_index):
             hosp_index = hospitalization_index[epi_datetime_array.index(macro_datetime_array[t])]
             
         # Advance one timestep
-        x.update(global_GDP_gr[t-1] - global_GDP_gr[0], hosp_index, PHA_soc_demand_reduction_mult, PHA_trav_demand_reduction_mult)
+        x.update(global_GDP_gr[t-1] - global_GDP_gr_trend, hosp_index, PHA_soc_demand_reduction_mult, PHA_trav_demand_reduction_mult)
         
         GDP[t] = x.get_value_added().sum()
         GDP_gr[t] = (GDP[t]/GDP[t-1])**x.timesteps_per_year - 1

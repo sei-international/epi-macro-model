@@ -39,6 +39,11 @@ global infection rate: # per 1000
     - [{year: 2021, month: 12, day: 31}, 0.0513]
     - [{year: 2022, month: 3, day: 31}, 0.0021]
 
+# For global GDP trajectory:
+#  - Specify growth on an annualized basis
+#  - The final value will be taken as a long-run trend that is
+#    compatible with balanced growth at the target growth rate
+#    specified in the IO model configuration file.
 global GDP trajectory: # Growth on an annualized basis
     - [{year: 2020, month: 3, day: 17}, 0.03]
     - [{year: 2020, month: 5, day: 1}, -0.05]

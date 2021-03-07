@@ -60,13 +60,14 @@ sectors:
         necessities: 20
         industry: 30
         other: 20
-    initial-utilization: # Full utilization at normal capacity = 1.0
-        construction: 1.0
-        public_facing: 1.0
-        social_support: 1.0
-        necessities: 1.0
-        industry: 1.0
-        other: 1.0
+    # initial-utilization: # This defaults to 1.00, and may be omitted
+    max-utilization: # This defaults to 1.00, and may be omitted
+        construction: 1.02
+        public_facing: 1.02
+        social_support: 1.05 # Allow overflow in hospitals
+        necessities: 1.02
+        industry: 1.02
+        other: 1.02
     global-GDP-elasticity-of-exports:
         necessities: 1.0
         industry: 1.2
