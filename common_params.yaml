@@ -44,7 +44,7 @@ global infection rate: # per 1000
 #  - The final value will be taken as a long-run trend that is
 #    compatible with balanced growth at the target growth rate
 #    specified in the IO model configuration file.
-global GDP trajectory: # Growth on an annualized basis
+global GDP trajectory:
     - [{year: 2020, month: 3, day: 17}, 0.03]
     - [{year: 2020, month: 5, day: 1}, -0.05]
     - [{year: 2020, month: 10, day: 1}, 0.0]
