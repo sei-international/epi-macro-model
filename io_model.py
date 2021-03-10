@@ -165,7 +165,7 @@ class IO_model:
         
     def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance, trav_ban):
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
-        self.H *= (1 + self.Wgr)
+        self.H = (1 + self.Wgr) * (self.H - self.H0) + self.H0
         self.G *= self.gov_aut_frac * (1 + self.gamma) + (1 - self.gov_aut_frac) * (1 + self.GDPgr_smoothed)
         for s in self.sectors_tradeable:
             self.X[s] *= 1 + self.gamma + delta_global_GDP_gr * self.global_GDP_elast_of_X[s]
