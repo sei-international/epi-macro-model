@@ -24,6 +24,8 @@ class IO_model:
         self.days_per_timestep = io_params['days-per-time-step']
         self.timesteps_per_year = round(365/io_params['days-per-time-step'])
         self.t = 0 # Initialize timestep counter
+        
+        self.gov_aut_frac = io_params['govt-expend-autonomous-fraction']
 
         nsector = io_params['sectors']['count']
         interind_data = csv_data.iloc[:nsector,:nsector]/self.timesteps_per_year
@@ -126,6 +128,8 @@ class IO_model:
         self.gamma = (1 + self.gamma_ann)**(1/self.timesteps_per_year) - 1
         self.Ygr = Series(data = self.gamma, index = self.sectors)
         self.Wgr = Series(data = self.gamma, index = self.sectors)
+        self.GDPgr = self.gamma
+        self.GDPgr_smoothed = self.gamma
         
         # Initialize potential output and 
         epsilon = self.gamma * io_params['calib']['threshold-util']/(1 - io_params['calib']['threshold-util'])
@@ -162,7 +166,7 @@ class IO_model:
     def update_desired_final_demand(self, delta_global_GDP_gr, hospitalization_index, soc_distance, trav_ban):
         self.H0 *= (1 + self.gamma) # Assume this "baseline" level follows expected growth
         self.H *= (1 + self.Wgr)
-        self.G *= (1 + self.gamma)
+        self.G *= self.gov_aut_frac * (1 + self.gamma) + (1 - self.gov_aut_frac) * (1 + self.GDPgr_smoothed)
         for s in self.sectors_tradeable:
             self.X[s] *= 1 + self.gamma + delta_global_GDP_gr * self.global_GDP_elast_of_X[s]
         self.F = self.desired_final_demand()
@@ -199,8 +203,11 @@ class IO_model:
         
     def update(self, delta_global_GDP_gr, hospitalization_index = 1.0, soc_distance = 0.0, trav_ban = 0.0):
         # These must occur in this order:
+        VAprev = self.get_value_added().sum()
         self.update_desired_final_demand(delta_global_GDP_gr, hospitalization_index, soc_distance, trav_ban)
         self.update_utilization()
         self.update_wages()
+        self.GDPgr = self.get_value_added().sum()/VAprev - 1
+        self.GDPgr_smoothed = self.GDPgr_smoothed + (1/self.timesteps_per_year) * (self.GDPgr - self.GDPgr_smoothed)
         self.t += 1
         

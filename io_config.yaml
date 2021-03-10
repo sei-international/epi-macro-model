@@ -23,8 +23,11 @@ final-demand:
     investment: Private fixed investment
     exports: Exports of goods and services
     imports: Imports of goods and services
-
+    
 wages: Compensation of employees
+
+# The fraction of government expenditure that grows at target growth rate
+govt-expend-autonomous-fraction: 0.9
 
 sectors:
     count: 15
