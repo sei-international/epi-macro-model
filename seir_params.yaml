@@ -6,7 +6,7 @@
 #
 ###############################################################
 
-R0: 2.25
+R0: 7
 k factor: 0.1
 unobserved fraction of cases: 0.87
 population at risk fraction: 0.05 # As a fraction of total population
