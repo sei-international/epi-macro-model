@@ -3,31 +3,30 @@ from scipy.special import betainc as betainc
 import yaml
 
 class SEIR_matrix:
-    def __init__(self, seir_params_file: str, region: dict):
+    def __init__(self, region: dict, variant: dict):
         """ Create a new SEIR_matrix object
 
         Parameters
         ----------
-        seir_params_file : str
-            A filename for a YAML file with epidemiological parameters.
 
         region : dict
             Number of localities and region population as a dict with keys
 
+        variant: dict
+            Number of variants includes as a dict with paramter keys
 
         Returns
         -------
         None.
 
         """
-        
+
         self.eps = 1.0e-9
-        
+
         initial_values = region['initial']
-        
-        with open(seir_params_file) as file:
-            seir_params = yaml.full_load(file)
-        
+
+        seir_params=variant
+
         #-------------------------------------------------------------------
         # Basic epidemiological parameters
         #-------------------------------------------------------------------
@@ -51,7 +50,7 @@ class SEIR_matrix:
             self.case_fatality_rate_r = self.case_fatality_rate_nr
 
         self.invisible_fraction = seir_params['unobserved fraction of cases']
-    
+
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
 
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
@@ -65,7 +64,7 @@ class SEIR_matrix:
         self.inf2rd_r = recover_rate_ratio * self.inf2rd_nr
         if max(self.inf2rd_r) >= 1:
             raise ValueError("Imputed recovery rate of population at risk exceeds 100% for at least one time step")
-        
+
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
@@ -78,7 +77,7 @@ class SEIR_matrix:
             fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['average']
             fraction_of_visible_requiring_hospitalization_r = fraction_of_visible_requiring_hospitalization_nr
         self.overflow_hospitalized_mortality_rate_factor = seir_params['case fatality rate']['overflow hospitalized mortality rate factor']
-        
+
         #-------------------------------------------------------------------
         # Calculated parameters based on imported parameters
         #-------------------------------------------------------------------
@@ -91,19 +90,19 @@ class SEIR_matrix:
         for i in range(1,self.infective_time_period):
             self.mean_infectious_period += (i + 1) * P * inf2rd_ave[i - 1]
             P *= 1 - inf2rd_ave[i - 1]
-            
+
         self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate_nr / fraction_of_visible_requiring_hospitalization_nr
         self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_r / fraction_of_visible_requiring_hospitalization_r
-        
+
         self.ave_fraction_of_visible_requiring_hospitalization = (1 - self.population_at_risk_frac) * fraction_of_visible_requiring_hospitalization_nr + \
                                         self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r
 
         self.base_individual_exposure_rate = self.R0/self.mean_infectious_period
-        
+
         # Assuming that populations of localities follow the normal rank-size rule with exponent -1, calculate ratio
         # of total population to population in the largest locality
         self.largest_loc_ranksize_mult = sum([1/x for x in range(1,self.n_loc + 1)])
-        
+
         #-------------------------------------------------------------------
         # State variables
         #-------------------------------------------------------------------
@@ -114,18 +113,18 @@ class SEIR_matrix:
         self.Itot_prev = initial_infected
         self.N_prev = self.N
 
-        # Exposed, either not at risk (nr) or at risk (r)
+        # Exposed, either not at risk (nr) or at risk (r)  ccw(initialised at 0)
         self.E_nr = np_zeros(self.exposed_time_period + 1)
         self.E_r = np_zeros(self.exposed_time_period + 1)
         # Infected, either not at risk (nr) or at risk (r)
         self.I_nr = np_zeros(self.infective_time_period + 1)
         self.I_r = np_zeros(self.infective_time_period + 1)
-        
+
         self.E_nr[1] = 0.0
         self.E_r[1] = 0.0
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
         self.I_r[1] = self.population_at_risk_frac * initial_infected
-        
+
         # Recovered: Assume none at initial time step
         self.R = 0
         self.recovered_pool = 0
@@ -133,21 +132,21 @@ class SEIR_matrix:
         # Susceptible population
         self.S = self.N - self.Itot - self.R - initial_infected
         self.S_prev = self.S
-        
+
         self.new_deaths = 0
-        
+
         self.comm_spread_frac = initial_values['population with community spread']
-        
+
         #-------------------------------------------------------------------
         # Misc
         #-------------------------------------------------------------------
         self.curr_mortality_rate = 0
-        
+
 
     # Probability that num_inf cases generates at least num_inf + 1 additional cases
     def p_spread(self, num_inf: float, pub_health_factor: float) -> float:
-        """ Calculates the probability that num_inf cases generates at least num_inf + 1 additional cases 
-        
+        """ Calculates the probability that num_inf cases generates at least num_inf + 1 additional cases
+
         Parameters
         ----------
         num_inf : float
@@ -163,10 +162,10 @@ class SEIR_matrix:
         """
 
         return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
-    
+
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float) -> tuple:
         """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
-        
+
         Parameters
         ----------
         infected_fraction : float
@@ -195,13 +194,13 @@ class SEIR_matrix:
         alpha_plus_beta = max(self.eps, (1/self.coeff_of_variation_i**2) * (1/(infected_fraction + self.eps) - 1) - 1)
         alpha = alpha_plus_beta * infected_fraction
         beta = alpha_plus_beta - alpha
-        
+
         hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.ave_fraction_of_visible_requiring_hospitalization
-        
+
         # Calculate mean exceedence fraction assuming a beta distribution
         mean_exceedance_per_infected_fraction = 1 - betainc(alpha + 1, beta, hospital_p_i_threshold) - \
                     (hospital_p_i_threshold/(infected_fraction + self.eps)) * (1 - betainc(alpha, beta, hospital_p_i_threshold))
-        
+
         # Baseline fraction
         v = 1 - self.invisible_fraction
         h = self.ave_fraction_of_visible_requiring_hospitalization
@@ -209,19 +208,19 @@ class SEIR_matrix:
         # Rate for population not at risk and at risk
         m_nr = v * h * overflow_corr * self.baseline_hospitalized_mortality_rate_nr
         m_r = v * h * overflow_corr * self.baseline_hospitalized_mortality_rate_r
-        
+
         return m_nr, m_r
- 
+
     def social_exposure_rate(self, infected_visitors: float, pub_health_factor: float, fraction_at_risk_isolated: float) -> float:
         """ Calculates the effective exposure rate per susceptible individual, taking inhomogeneity into account
-        
+
         Parameters
         ----------
         infected_visitors : float
             Number of infected individuals who have arrived into the region from outside.
         pub_health_factor : float
-            A value from 0 to 1 that expresses the reduction from R0 to Reff due to public health measures.
-            
+            A value from 0 to 1 that expresses the reduction from R0 to coefficient of variation due to public health measures.
+
         Raises
         ------
         ValueError
@@ -240,7 +239,7 @@ class SEIR_matrix:
         # First, check if there are no infected individuals either in the population or newly introduced
         if n_i == 0 and self.comm_spread_frac == 0:
             return 0.0
-        
+
         # If there is not already community spread, the visitors may initiate it. Assume they all arrive in one locality and calculate the fraction.
         if self.comm_spread_frac == 0:
             adj_comm_spread_frac = self.largest_loc_ranksize_mult * n_i/(self.N_prev + self.eps)
@@ -252,16 +251,16 @@ class SEIR_matrix:
         p_i = n_i/(self.N_prev + self.eps)
         cv_corr = self.coeff_of_variation_i**2 * n_i/(self.S_prev + self.eps)
         clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/(self.S_prev + self.eps)
-        
+
         base_rate = adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
 
         pub_health_factor_r = (1 - fraction_at_risk_isolated * self.population_at_risk_frac) * pub_health_factor
-    
+
         return pub_health_factor * base_rate, pub_health_factor_r * base_rate
 
     def vaccinations(self, max_vaccine_doses: float, vaccinate_at_risk_first: bool) -> float:
         """
-        
+
 
         Parameters
         ----------
@@ -271,19 +270,19 @@ class SEIR_matrix:
         Returns
         -------
         Population removed from susceptible and added to recovered pool.
-        
+
         Side effects
         ------------
         Updates population_at_risk_frac
 
         """
-        
+
         vaccinations = min(self.S, max_vaccine_doses)
         if vaccinate_at_risk_first:
             self.population_at_risk_frac = max(0, self.population_at_risk_frac * self.S - vaccinations)/(self.S + self.eps)
-        
+
         return vaccinations
-        
+
 
     def update(self, infected_visitors: float,
                internal_mobility_rate: float,
@@ -294,7 +293,7 @@ class SEIR_matrix:
                max_vaccine_doses: float,
                vaccinate_at_risk_first: bool):
         """
-        
+
 
         Parameters
         ----------
@@ -328,7 +327,7 @@ class SEIR_matrix:
             self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
-        
+
         #------------------------------------------------------------------------------------------------
         # 2: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
@@ -345,7 +344,7 @@ class SEIR_matrix:
         self.R += self.recovered_pool
         self.N_prev = self.N
         self.N -= self.new_deaths
-        
+
         #------------------------------------------------------------------------------------------------
         # 3: Update new infections and shift exposed pool
         #------------------------------------------------------------------------------------------------
@@ -358,7 +357,7 @@ class SEIR_matrix:
             self.E_r[j] = self.E_r[j - 1] - new_infected_r
             self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected_nr
             self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected_r
-        
+
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
@@ -380,4 +379,3 @@ class SEIR_matrix:
         # For this calculation, take visitors and internal mobility into account
         ni_addl = (internal_mobility_rate * self.Itot + infected_visitors)/self.n_loc
         self.comm_spread_frac += (1 - self.comm_spread_frac) * self.p_spread(ni_addl, pub_health_factor)
-        

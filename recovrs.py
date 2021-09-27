@@ -34,7 +34,7 @@ for opt, arg in opts:
 
 print('Running epidemiological model...')
 try:
-    nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, hosp_ndx = epidemiology_model()
+    nvars, variant_params, nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, hosp_ndx = epidemiology_model()
     for j in range(0,nrgn):
         info = rgns[j]
         d = {'date': epi_dts,
@@ -46,16 +46,15 @@ try:
         DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '.csv', index=False)
 except Exception:
     traceback.print_exc()
-    
+
 if model != 'epi':
     print('Running macroeconomic model...')
     try:
         macro_dts, VA = macroeconomic_model(epi_dts, hosp_ndx)
-        
+
         VA.insert(0, 'date', macro_dts)
         VA.to_csv('output_value_added.csv', index=False)
     except Exception:
         traceback.print_exc()
 
 print('Finished')
-  
