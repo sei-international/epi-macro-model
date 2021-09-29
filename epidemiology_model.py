@@ -150,6 +150,9 @@ def epidemiology_model():
     recovered_over_time = np_zeros((nregions, ntimesteps, nvars))
     mortality_rate_over_time = np_zeros((nregions, ntimesteps, nvars))
 
+    # Infected by regions
+    total_inf= np_zeros(nregions)
+
     hospitalization_index_region = np_ones(nregions)
     hospitalization_index = np_ones(ntimesteps)
 
@@ -232,7 +235,15 @@ def epidemiology_model():
                 cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
                 comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                 mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
-                hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * epi[j][v].Itot/baseline_hosp[j]
+
+
+        # calculate hospitalisation index across variants
+        for j in range(0, nregions):
+            total_inf[j]=epi[j][0].Itot+epi[j][1].Itot
+            hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * total_inf[j]/baseline_hosp[j]
+            print('Region: ', j)
+            print('Total inf. :', total_inf[j])
+            print('Hospitalization_index_region:', hospitalization_index_region[j])
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
