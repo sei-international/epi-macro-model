@@ -236,6 +236,16 @@ def epidemiology_model():
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
+        # True up susceptible pools between variants
+        for v in range (0,nvars):
+            for j in range(0, nregions):
+                if nvars > 1:
+                    if v==0 :
+                        epi[j][v].S-= (epi[j][1].E_nr[1] + epi[j][1].E_r[1])
+                    if v==1 :
+                        epi[j][v].S-= (epi[j][0].E_nr[1] + epi[j][0].E_r[1])
+
+
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, \
        hospitalization_index
