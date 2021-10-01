@@ -219,7 +219,7 @@ class SEIR_matrix:
         infected_visitors : float
             Number of infected individuals who have arrived into the region from outside.
         pub_health_factor : float
-            A value from 0 to 1 that expresses the reduction from R0 to coefficient of variation due to public health measures.
+            A value from 0 to 1 that expresses the reduction from R0 to Reff due to public health measures.
 
         Raises
         ------
@@ -355,8 +355,8 @@ class SEIR_matrix:
             new_infected_r = self.exp2inf[j-1] * self.E_r[j - 1]
             self.E_nr[j] = self.E_nr[j - 1] - new_infected_nr
             self.E_r[j] = self.E_r[j - 1] - new_infected_r
-            self.I_nr[1] = self.I_nr[1] + (1 - self.population_at_risk_frac) * new_infected_nr
-            self.I_r[1] = self.I_r[1] + self.population_at_risk_frac * new_infected_r
+            self.I_nr[1] = self.I_nr[1] +  new_infected_nr
+            self.I_r[1] = self.I_r[1] + new_infected_r
 
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
