@@ -38,7 +38,6 @@ def epidemiology_model():
             intl_visitors.append(0.0)
         between_locality_mobility_rate.append(rgn['between locality mobility rate'])
         between_region_mobility_rate.append(rgn['between region mobility rate'])
-
         epi.append(epivar) # contains objects with following order: [[rgn1/var1, rgn2/var1], [rgn1/var2, rgn2/var2]]
 
 
@@ -140,7 +139,6 @@ def epidemiology_model():
                                                window['ramp down for'],
                                                window['effectiveness']))
 
-
     # Initialize values for indicator graphs
     deaths = np_zeros((nregions, nvars))
     cumulative_cases = np_zeros((nregions, nvars))
@@ -150,27 +148,29 @@ def epidemiology_model():
     recovered_over_time = np_zeros((nregions, ntimesteps, nvars))
     mortality_rate_over_time = np_zeros((nregions, ntimesteps, nvars))
 
-    # Infected by regions
-    total_inf= np_zeros(nregions)
-
     hospitalization_index_region = np_ones(nregions)
     hospitalization_index = np_ones(ntimesteps)
 
     susceptible_over_time = np_zeros((nregions, ntimesteps, nvars))
-    for var in range(0,nvars):
-        susceptible_over_time[:,0, var] = [e.S for e in epi[var]]
+    for j in range(0,nregions):
+        susceptible_over_time[j,0,:] = [e.S for e in epi[j]]
+    # susceptible_over_time = np_zeros((nregions, ntimesteps, nvars))
+    # for j in range(0,nregions):
+    #     e=epi[j]
+    #     for v in range(0, len(e)):
+    #         susceptible_over_time[j,0,v] = e[v].S
 
     exposed_over_time = np_zeros((nregions, ntimesteps, nvars))
-    for var in range(0,nvars):
-        exposed_over_time[:,0] = [np_sum(e.E_nr) + np_sum(e.E_r) for e in epi[var]]
+    for j in range(0,nregions):
+        exposed_over_time[j,0,:] = [np_sum(e.E_nr) + np_sum(e.E_r) for e in epi[j]]
 
     infective_over_time = np_zeros((nregions, ntimesteps, nvars))
-    for var in range(0,nvars):
-        infective_over_time[:,0] = [np_sum(e.I_nr + e.I_r) for e in epi[var]]
+    for j in range(0,nregions):
+        infective_over_time[j,0,:] = [np_sum(e.I_nr + e.I_r) for e in epi[j]]
 
     comm_spread_frac_over_time = np_zeros((nregions, ntimesteps, nvars))
-    for var in range(0,nvars):
-        comm_spread_frac_over_time[:,0] = [e.comm_spread_frac for e in epi[var]]
+    for j in range(0,nregions):
+        comm_spread_frac_over_time[j,0,:] = [e.comm_spread_frac for e in epi[j]]
 
     for i in range(0, ntimesteps):
         # Public health measures
@@ -236,25 +236,21 @@ def epidemiology_model():
                 comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                 mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
 
-
         # calculate hospitalisation index across variants
+        total_inf= np_zeros(nregions)
         for j in range(0, nregions):
-            total_inf[j]=epi[j][0].Itot+epi[j][1].Itot
+            # Infected by regions
+            for e in epi[j]:
+                total_inf[j]+= e.Itot # add total infected for each variant in that region
+            comm_spread_frac_over_time[j,0,:] = [e.comm_spread_frac for e in epi[j]]
             hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * total_inf[j]/baseline_hosp[j]
-            print('Region: ', j)
-            print('Total inf. :', total_inf[j])
-            print('Hospitalization_index_region:', hospitalization_index_region[j])
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
         # True up susceptible pools between variants
         for v in range (0,nvars):
             for j in range(0, nregions):
-                if nvars > 1:
-                    if v==0 :
-                        epi[j][v].S-= (epi[j][1].E_nr[1] + epi[j][1].E_r[1])
-                    if v==1 :
-                        epi[j][v].S-= (epi[j][0].E_nr[1] + epi[j][0].E_r[1])
+                epi[j][v].S-= np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1])
 
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
