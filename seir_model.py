@@ -131,7 +131,7 @@ class SEIR_matrix:
         self.recovered_pool = 0
 
         # Susceptible population
-        self.S = self.N - self.Itot - self.R - initial_infected
+        self.S = self.N - self.Itot - self.R
         self.S_prev = self.S
 
         self.new_deaths = 0
@@ -326,6 +326,8 @@ class SEIR_matrix:
             recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd_r[j-1]*self.I_r[j-1]
             self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
             self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
+        self.I_nr[1] = self.E_nr[self.exposed_time_period]
+        self.I_r[1] = self.E_r[self.exposed_time_period]
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
 
@@ -347,10 +349,8 @@ class SEIR_matrix:
         self.N -= self.new_deaths
 
         #------------------------------------------------------------------------------------------------
-        # 3: Update new infections and shift exposed pool
+        # 3: Shift exposed pool
         #------------------------------------------------------------------------------------------------
-        self.I_nr[1] = self.E_nr[self.exposed_time_period]
-        self.I_r[1] = self.E_r[self.exposed_time_period]
         for j in range(self.exposed_time_period, 1, -1):
             new_infected_nr = self.exp2inf[j-1] * self.E_nr[j - 1]
             new_infected_r = self.exp2inf[j-1] * self.E_r[j - 1]
