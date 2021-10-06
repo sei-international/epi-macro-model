@@ -291,7 +291,8 @@ class SEIR_matrix:
                bed_occupancy_fraction: float,
                beds_per_1000: float,
                max_vaccine_doses: float,
-               vaccinate_at_risk_first: bool):
+               vaccinate_at_risk_first: bool,
+               Itot_allvars: float):
         """
 
 
@@ -362,7 +363,7 @@ class SEIR_matrix:
         if self.comm_spread_frac == 0:
             infected_fraction = 0
         else:
-            infected_fraction = self.Itot/(self.comm_spread_frac * self.N + self.eps)
+            infected_fraction = Itot_allvars/(self.comm_spread_frac * self.N + self.eps)
         m_nr, m_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000)
         self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
         self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
