@@ -227,7 +227,7 @@ def epidemiology_model():
                 # Update values for indicator graphs
                 new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
                 deaths[j,v] += epi[j][v].new_deaths
-                susceptible_over_time[j,i,v] = epi[j][v].S
+                #susceptible_over_time[j,i,v] = epi[j][v].S
                 exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
                 infective_over_time[j,i,v] = epi[j][v].Itot
                 deaths_over_time[j,i,v] = deaths[j,v]
@@ -248,10 +248,11 @@ def epidemiology_model():
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
         # True up susceptible pools between variants
-        for v in range (0,nvars):
-            for j in range(0, nregions):
-                epi[j][v].S-= np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1])
-
+        for j in range(0, nregions):
+            for v in range(0,nvars):
+                if nvars>1:
+                    epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]))
+                susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, \

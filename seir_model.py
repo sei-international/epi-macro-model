@@ -357,7 +357,6 @@ class SEIR_matrix:
             self.E_r[j] = self.E_r[j - 1] - new_infected_r
             self.I_nr[1] = self.I_nr[1] +  new_infected_nr
             self.I_r[1] = self.I_r[1] + new_infected_r
-
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
