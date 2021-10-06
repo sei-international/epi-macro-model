@@ -328,25 +328,8 @@ class SEIR_matrix:
         self.I_nr[1] = self.E_nr[self.exposed_time_period]
         self.I_r[1] = self.E_r[self.exposed_time_period]
 
-        # #------------------------------------------------------------------------------------------------
-        # # 2: Separate recovered and deceased into recovered/deceased pools and update total population
-        # #------------------------------------------------------------------------------------------------
-        # # Ignore visitors and internal mobility for this calculation: This is due to progress of the disease alone
-        # if self.comm_spread_frac == 0:
-        #     infected_fraction = 0
-        # else:
-        #     infected_fraction = self.Itot/(self.comm_spread_frac * self.N + self.eps)
-        # m_nr, m_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000)
-        # self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
-        # self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
-        # self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
-        # # Update recovered pool and total population
-        # self.R += self.recovered_pool
-        # self.N_prev = self.N
-        # self.N -= self.new_deaths
-
         #------------------------------------------------------------------------------------------------
-        # 3: Shift exposed pool
+        # 2: Shift exposed pool
         #------------------------------------------------------------------------------------------------
         for j in range(self.exposed_time_period, 1, -1):
             new_infected_nr = self.exp2inf[j-1] * self.E_nr[j - 1]
@@ -373,7 +356,7 @@ class SEIR_matrix:
         self.R += vaccinated
 
         #------------------------------------------------------------------------------------------------
-        # 2: Separate recovered and deceased into recovered/deceased pools and update total population
+        # 4: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
         # Ignore visitors and internal mobility for this calculation: This is due to progress of the disease alone
         if self.comm_spread_frac == 0:
@@ -388,6 +371,7 @@ class SEIR_matrix:
         self.R += self.recovered_pool
         self.N_prev = self.N
         self.N -= self.new_deaths
+
         #------------------------------------------------------------------------------------------------
         # 4: Update community spread fraction
         #------------------------------------------------------------------------------------------------
