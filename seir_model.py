@@ -327,8 +327,50 @@ class SEIR_matrix:
             self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.I_nr[1] = self.E_nr[self.exposed_time_period]
         self.I_r[1] = self.E_r[self.exposed_time_period]
+
+        # #------------------------------------------------------------------------------------------------
+        # # 2: Separate recovered and deceased into recovered/deceased pools and update total population
+        # #------------------------------------------------------------------------------------------------
+        # # Ignore visitors and internal mobility for this calculation: This is due to progress of the disease alone
+        # if self.comm_spread_frac == 0:
+        #     infected_fraction = 0
+        # else:
+        #     infected_fraction = self.Itot/(self.comm_spread_frac * self.N + self.eps)
+        # m_nr, m_r = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000)
+        # self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
+        # self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
+        # self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
+        # # Update recovered pool and total population
+        # self.R += self.recovered_pool
+        # self.N_prev = self.N
+        # self.N -= self.new_deaths
+
+        #------------------------------------------------------------------------------------------------
+        # 3: Shift exposed pool
+        #------------------------------------------------------------------------------------------------
+        for j in range(self.exposed_time_period, 1, -1):
+            new_infected_nr = self.exp2inf[j-1] * self.E_nr[j - 1]
+            new_infected_r = self.exp2inf[j-1] * self.E_r[j - 1]
+            self.E_nr[j] = self.E_nr[j - 1] - new_infected_nr
+            self.E_r[j] = self.E_r[j - 1] - new_infected_r
+            self.I_nr[1] = self.I_nr[1] +  new_infected_nr
+            self.I_r[1] = self.I_r[1] + new_infected_r
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
+        #------------------------------------------------------------------------------------------------
+        # 3: Update new exposures and susceptible pool, taking vaccinations into account
+        #------------------------------------------------------------------------------------------------
+        soc_exp_rate_nr, soc_exp_rate_r = self.social_exposure_rate(infected_visitors, pub_health_factor, fraction_at_risk_isolated)
+        self.E_nr[1] = (1 - self.population_at_risk_frac) * soc_exp_rate_nr * self.S
+        self.E_r[1] = self.population_at_risk_frac * soc_exp_rate_r * self.S
+        # Update population at risk fraction if they are proceeding at different rates
+        self.population_at_risk_frac = self.population_at_risk_frac * (1 - soc_exp_rate_r)/(1 - soc_exp_rate_nr + (soc_exp_rate_nr - soc_exp_rate_r) * self.population_at_risk_frac)
+        self.S_prev = self.S
+        self.S -= self.E_nr[1] + self.E_r[1]
+        # Do this update after accounting for newly exposed
+        vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
+        self.S -= vaccinated
+        self.R += vaccinated
 
         #------------------------------------------------------------------------------------------------
         # 2: Separate recovered and deceased into recovered/deceased pools and update total population
@@ -346,32 +388,6 @@ class SEIR_matrix:
         self.R += self.recovered_pool
         self.N_prev = self.N
         self.N -= self.new_deaths
-
-        #------------------------------------------------------------------------------------------------
-        # 3: Shift exposed pool
-        #------------------------------------------------------------------------------------------------
-        for j in range(self.exposed_time_period, 1, -1):
-            new_infected_nr = self.exp2inf[j-1] * self.E_nr[j - 1]
-            new_infected_r = self.exp2inf[j-1] * self.E_r[j - 1]
-            self.E_nr[j] = self.E_nr[j - 1] - new_infected_nr
-            self.E_r[j] = self.E_r[j - 1] - new_infected_r
-            self.I_nr[1] = self.I_nr[1] +  new_infected_nr
-            self.I_r[1] = self.I_r[1] + new_infected_r
-        #------------------------------------------------------------------------------------------------
-        # 3: Update new exposures and susceptible pool, taking vaccinations into account
-        #------------------------------------------------------------------------------------------------
-        soc_exp_rate_nr, soc_exp_rate_r = self.social_exposure_rate(infected_visitors, pub_health_factor, fraction_at_risk_isolated)
-        self.E_nr[1] = (1 - self.population_at_risk_frac) * soc_exp_rate_nr * self.S
-        self.E_r[1] = self.population_at_risk_frac * soc_exp_rate_r * self.S
-        # Update population at risk fraction if they are proceeding at different rates
-        self.population_at_risk_frac = self.population_at_risk_frac * (1 - soc_exp_rate_r)/(1 - soc_exp_rate_nr + (soc_exp_rate_nr - soc_exp_rate_r) * self.population_at_risk_frac)
-        self.S_prev = self.S
-        self.S -= self.E_nr[1] + self.E_r[1]
-        # Do this update after accounting for newly exposed
-        vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
-        self.S -= vaccinated
-        self.R += vaccinated
-
         #------------------------------------------------------------------------------------------------
         # 4: Update community spread fraction
         #------------------------------------------------------------------------------------------------
