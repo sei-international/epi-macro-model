@@ -253,9 +253,12 @@ def epidemiology_model():
         for j in range(0, nregions):
             for v in range(0,nvars):
                 if nvars>1:
-                    epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]))
+                    if i==0:
+                        epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]) + np_sum(epi[j][~v].Itot))
+                    if i > 0:
+                        epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]))
                 susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, \
-       hospitalization_index
+       hospitalization_index,epi
