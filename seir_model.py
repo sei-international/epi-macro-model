@@ -1,6 +1,7 @@
 from numpy import array as np_array, zeros as np_zeros, sum as np_sum
 from scipy.special import betainc as betainc
 import yaml
+from common import get_datetime
 
 class SEIR_matrix:
     def __init__(self, region: dict, variant: dict):
@@ -30,6 +31,7 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Basic epidemiological parameters
         #-------------------------------------------------------------------
+        self.start_time= get_datetime(seir_params['start date'])
         self.R0 = seir_params['R0']
         self.k = seir_params['k factor']
         if 'population at risk fraction' in seir_params:

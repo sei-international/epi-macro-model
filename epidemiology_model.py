@@ -174,6 +174,7 @@ def epidemiology_model():
         comm_spread_frac_over_time[j,0,:] = [e.comm_spread_frac for e in epi[j]]
 
     for i in range(0, ntimesteps):
+
         # Public health measures
         PHA_social_distancing = 0
         for w in soc_dist_windows:
@@ -210,35 +211,37 @@ def epidemiology_model():
             for j in range(0, nregions):
                 intl_infected_visitors = intl_visitors[j] * global_infection_rate[i] * min(0, 1 - PHA_travel_restrictions)
                 dom_infected_visitors = 0
-                if nregions > 1:
-                    for k in range(0, nregions):
-                        if k != j:
-                            dom_infected_visitors += epi[k][v].Itot_prev * between_region_mobility_rate[k]/(nregions - 1)
+                # Confirm current variant has been introduced already
+                if epi_datetime_array[i]>=epi[j][v].start_time:
+                    if nregions > 1:
+                        for k in range(0, nregions):
+                            if k != j:
+                                dom_infected_visitors += epi[k][v].Itot_prev * between_region_mobility_rate[k]/(nregions - 1)
 
-                # Run the model for one time step
-                epi[j][v].update(dom_infected_visitors + intl_infected_visitors,
-                              between_locality_mobility_rate[j],
-                              public_health_adjustment,
-                              PHA_isolate_at_risk,
-                              bed_occupancy_fraction,
-                              beds_per_1000[j],
-                              vaccination_max_doses[i],
-                              vaccinate_at_risk,
-                              Itot_allvars[j])
+                    # Run the model for one time step
+                    epi[j][v].update(dom_infected_visitors + intl_infected_visitors,
+                                  between_locality_mobility_rate[j],
+                                  public_health_adjustment,
+                                  PHA_isolate_at_risk,
+                                  bed_occupancy_fraction,
+                                  beds_per_1000[j],
+                                  vaccination_max_doses[i],
+                                  vaccinate_at_risk,
+                                  Itot_allvars[j])
 
-                # Update values for indicator graphs
-                new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
-                deaths[j,v] += epi[j][v].new_deaths
-                #susceptible_over_time[j,i,v] = epi[j][v].S
-                exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
-                infective_over_time[j,i,v] = epi[j][v].Itot
-                deaths_over_time[j,i,v] = deaths[j,v]
-                recovered_over_time[j,i,v] = epi[j][v].R
-                cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
-                comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
-                mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
+                    # Update values for indicator graphs
+                    new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
+                    deaths[j,v] += epi[j][v].new_deaths
+                    #susceptible_over_time[j,i,v] = epi[j][v].S
+                    exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
+                    infective_over_time[j,i,v] = epi[j][v].Itot
+                    deaths_over_time[j,i,v] = deaths[j,v]
+                    recovered_over_time[j,i,v] = epi[j][v].R
+                    cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
+                    comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
+                    mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
 
-        # calculate hospitalisation index across variants
+        # Calculate hospitalisation index across variants
         Itot_allvars=np_zeros(nregions)
         for j in range(0, nregions):
             # Infected by regions

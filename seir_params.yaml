@@ -6,6 +6,9 @@
 #
 ###############################################################
 - name: Baseline variant
+
+  start date: {year: 2020, month: 3, day: 12}
+
   R0: 2.25
   k factor: 0.1
   unobserved fraction of cases: 0.87
@@ -31,6 +34,9 @@
   statistical-model:
       coeff of variation of infected where spreading: 0.6
 - name: Delta variant
+
+  start date: {year: 2020, month: 3, day: 12}
+
   R0: 7
   k factor: 0.1
   unobserved fraction of cases: 0.87
