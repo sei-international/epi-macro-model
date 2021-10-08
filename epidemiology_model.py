@@ -141,6 +141,7 @@ def epidemiology_model():
 
     # Initialize values for indicator graphs
     Itot_allvars=np_zeros(nregions)
+    comm_spread_frac_allvars = np_zeros((nregions, nvars))
     deaths = np_zeros((nregions, nvars))
     cumulative_cases = np_zeros((nregions, nvars))
 
@@ -205,6 +206,10 @@ def epidemiology_model():
             bed_occupancy_factor = 1
         bed_occupancy_fraction = bed_occupancy_factor * normal_bed_occupancy_fraction
 
+        #Community spread
+        for j in range(0, nregions):
+            comm_spread_frac_allvars[j,:] = [e.comm_spread_frac for e in epi[j]]
+
         # Loop of variants
         for v in range(0,nvars):
             # Loop over regions
@@ -227,7 +232,8 @@ def epidemiology_model():
                                   beds_per_1000[j],
                                   vaccination_max_doses[i],
                                   vaccinate_at_risk,
-                                  Itot_allvars[j])
+                                  Itot_allvars[j],
+                                  comm_spread_frac_allvars[j])
 
                     # Update values for indicator graphs
                     new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
@@ -247,7 +253,6 @@ def epidemiology_model():
             # Infected by regions
             for e in epi[j]:
                 Itot_allvars[j]+= e.Itot # add total infected for each variant in that region
-            comm_spread_frac_over_time[j,0,:] = [e.comm_spread_frac for e in epi[j]]
             hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * Itot_allvars[j]/baseline_hosp[j]
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
