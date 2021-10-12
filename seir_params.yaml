@@ -33,9 +33,15 @@
 
   statistical-model:
       coeff of variation of infected where spreading: 0.6
+
+  initial:
+    infected fraction:
+      Ports of entry: 0.006 # Per 1000 population
+      Other provinces: 0 # Per 1000 population
+
 - name: Delta variant
 
-  start date: {year: 2020, month: 3, day: 12}
+  start date: {year: 2020, month: 12, day: 31}
 
   R0: 7
   k factor: 0.1
@@ -61,3 +67,8 @@
 
   statistical-model:
       coeff of variation of infected where spreading: 0.6
+
+  initial:
+    infected fraction:
+      Ports of entry: 0.006 # Per 1000 population
+      Other provinces: 0 # Per 1000 population

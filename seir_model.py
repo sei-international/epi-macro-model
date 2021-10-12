@@ -110,7 +110,12 @@ class SEIR_matrix:
         #-------------------------------------------------------------------
         # Total population and population at risk
         self.N = initial_values['population']
-        initial_infected = initial_values['infected fraction'] * self.N/1000 # Entered per 1000
+        if region['name']=='Ports of entry':
+            self.initial_infected = seir_params['initial']['infected fraction']['Ports of entry'] * self.N/1000 # Entered per 1000
+        if region['name']=='Other provinces':
+            self.initial_infected = seir_params['initial']['infected fraction']['Other provinces'] * self.N/1000 # Entered per 1000
+        initial_infected = self.initial_infected
+        #initial_infected = initial_values['infected fraction'] * self.N/1000 # Entered per 1000
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
         self.N_prev = self.N
