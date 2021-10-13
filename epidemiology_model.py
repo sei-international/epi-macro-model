@@ -3,6 +3,7 @@ from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as 
 import yaml
 from seir_model import SEIR_matrix
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array, timesteps_over_timedelta_weeks
+from sys import exit
 
 def epidemiology_model():
 
@@ -39,6 +40,14 @@ def epidemiology_model():
         between_locality_mobility_rate.append(rgn['between locality mobility rate'])
         between_region_mobility_rate.append(rgn['between region mobility rate'])
         epi.append(epivar) # contains objects with following order: [[rgn1/var1, rgn2/var1], [rgn1/var2, rgn2/var2]]
+
+    
+    proportion_total = [e.proportion_global_infected for e in epi[0]]
+    test1=np_sum(proportion_total,axis=0)
+    if any(test1<0.999) or any(test1>1.001):
+        print('Error test1: aborted')
+        print('proportions of global infections across variants do not sum to 1')
+        exit()
 
     start_datetime = get_datetime(common_params['time']['COVID start'])
     start_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['COVID start'])
@@ -215,7 +224,6 @@ def epidemiology_model():
                 dom_infected_visitors = 0
                 # Confirm current variant has been introduced already
                 if epi_datetime_array[i] >= epi[j][v].start_time:
-                    print('v,j: ', v,j)
                     if nregions > 1:
                         for k in range(0, nregions):
                             if k != j:
