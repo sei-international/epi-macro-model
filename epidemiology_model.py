@@ -31,7 +31,7 @@ def epidemiology_model():
         baseline_hosp.append(rgn['initial']['population'] * rgn['initial']['beds per 1000']/1000)
         epivar=[]
         for var in seir_params_multivar:
-            epivar.append(SEIR_matrix(rgn, var))
+            epivar.append(SEIR_matrix(rgn, var, common_params))
         if 'international travel' in rgn:
             intl_visitors.append(rgn['international travel']['daily arrivals'] * rgn['international travel']['duration of stay'])
         else:
@@ -39,7 +39,6 @@ def epidemiology_model():
         between_locality_mobility_rate.append(rgn['between locality mobility rate'])
         between_region_mobility_rate.append(rgn['between region mobility rate'])
         epi.append(epivar) # contains objects with following order: [[rgn1/var1, rgn2/var1], [rgn1/var2, rgn2/var2]]
-
 
     start_datetime = get_datetime(common_params['time']['COVID start'])
     start_time = timesteps_between_dates(common_params['time']['start date'], common_params['time']['COVID start'])
@@ -153,6 +152,8 @@ def epidemiology_model():
     hospitalization_index_region = np_ones(nregions)
     hospitalization_index = np_ones(ntimesteps)
 
+    infective_over_time = np_zeros((nregions, ntimesteps, nvars))
+
     susceptible_over_time = np_zeros((nregions, ntimesteps, nvars))
     for j in range(0,nregions):
         susceptible_over_time[j,0,:] = [e.S for e in epi[j]]
@@ -165,10 +166,6 @@ def epidemiology_model():
     exposed_over_time = np_zeros((nregions, ntimesteps, nvars))
     for j in range(0,nregions):
         exposed_over_time[j,0,:] = [np_sum(e.E_nr) + np_sum(e.E_r) for e in epi[j]]
-
-    infective_over_time = np_zeros((nregions, ntimesteps, nvars))
-    for j in range(0,nregions):
-        infective_over_time[j,0,:] = [np_sum(e.I_nr + e.I_r) for e in epi[j]]
 
     comm_spread_frac_over_time = np_zeros((nregions, ntimesteps, nvars))
     for j in range(0,nregions):
@@ -214,10 +211,11 @@ def epidemiology_model():
         for v in range(0,nvars):
             # Loop over regions
             for j in range(0, nregions):
-                intl_infected_visitors = intl_visitors[j] * global_infection_rate[i] * min(0, 1 - PHA_travel_restrictions)
+                intl_infected_visitors = intl_visitors[j] * (epi[j][v].proportion_global_infected[i]*global_infection_rate[i]) * min(0, 1 - PHA_travel_restrictions)
                 dom_infected_visitors = 0
                 # Confirm current variant has been introduced already
                 if epi_datetime_array[i] >= epi[j][v].start_time:
+                    print('v,j: ', v,j)
                     if nregions > 1:
                         for k in range(0, nregions):
                             if k != j:

@@ -1,10 +1,10 @@
-from numpy import array as np_array, zeros as np_zeros, sum as np_sum
+from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, interp as np_interp
 from scipy.special import betainc as betainc
 import yaml
-from common import get_datetime
+from common import get_datetime, timesteps_between_dates
 
 class SEIR_matrix:
-    def __init__(self, region: dict, variant: dict):
+    def __init__(self, region: dict, variant: dict, common_params):
         """ Create a new SEIR_matrix object
 
         Parameters
@@ -15,6 +15,10 @@ class SEIR_matrix:
 
         variant: dict
             Number of variants includes as a dict with paramter keys
+
+        common_params: dict
+            Parameters common to all variants and regions as a dict with
+            parameter keys
 
         Returns
         -------
@@ -104,6 +108,20 @@ class SEIR_matrix:
         # Assuming that populations of localities follow the normal rank-size rule with exponent -1, calculate ratio
         # of total population to population in the largest locality
         self.largest_loc_ranksize_mult = sum([1/x for x in range(1,self.n_loc + 1)])
+
+        proportion_global_infected_points=seir_params['proportion of global infection rate']
+        proportion_global_infected_npoints = len(proportion_global_infected_points)
+        proportion_global_infected_traj_start = proportion_global_infected_points[0][0]
+        global_infection_traj_start = common_params['global infection rate'][0][0]
+        if  get_datetime(proportion_global_infected_traj_start) > get_datetime(common_params['time']['COVID start']):
+            global_infection_traj_start=common_params['time']['COVID start']
+        proportion_global_infected_traj_timesteps_array = np_array(range(0,timesteps_between_dates(global_infection_traj_start, common_params['time']['end date']) + 1))
+        proportion_global_infected_ts = np_empty(proportion_global_infected_npoints)
+        proportion_global_infected_val = np_empty(proportion_global_infected_npoints)
+        for i in range(0,proportion_global_infected_npoints):
+            proportion_global_infected_ts[i] = timesteps_between_dates(global_infection_traj_start, proportion_global_infected_points[i][0])
+            proportion_global_infected_val[i] = proportion_global_infected_points[i][1]
+        self.proportion_global_infected =  np_interp(proportion_global_infected_traj_timesteps_array, proportion_global_infected_ts, proportion_global_infected_val)
 
         #-------------------------------------------------------------------
         # State variables
@@ -245,7 +263,7 @@ class SEIR_matrix:
         n_i = self.Itot_prev + infected_visitors
         # First, check if there are no infected individuals either in the population or newly introduced
         if n_i == 0 and self.comm_spread_frac == 0:
-            return 0.0
+            return [0.0, 0.0]
 
         # If there is not already community spread, the visitors may initiate it. Assume they all arrive in one locality and calculate the fraction.
         if self.comm_spread_frac == 0:
