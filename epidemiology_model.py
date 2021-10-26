@@ -185,7 +185,7 @@ def epidemiology_model():
     
         # Loop over regions
         for j in range(0, nregions):
-            intl_infected_visitors = intl_visitors[j] * global_infection_rate[i] * min(0, 1 - PHA_travel_restrictions)
+            intl_infected_visitors = intl_visitors[j] * global_infection_rate[i] * min(1, 1 - PHA_travel_restrictions)
             dom_infected_visitors = 0
             if nregions > 1:
                 for k in range(0, nregions):
