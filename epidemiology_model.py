@@ -41,7 +41,7 @@ def epidemiology_model():
         between_region_mobility_rate.append(rgn['between region mobility rate'])
         epi.append(epivar) # contains objects with following order: [[rgn1/var1, rgn2/var1], [rgn1/var2, rgn2/var2]]
 
-    
+
     proportion_total = [e.proportion_global_infected for e in epi[0]]
     test1=np_sum(proportion_total,axis=0)
     if any(test1<0.999) or any(test1>1.001):
