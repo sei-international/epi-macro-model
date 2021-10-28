@@ -176,6 +176,10 @@ def epidemiology_model():
     for j in range(0,nregions):
         exposed_over_time[j,0,:] = [np_sum(e.E_nr) + np_sum(e.E_r) for e in epi[j]]
 
+    reexposed_over_time = np_zeros((nregions, ntimesteps, nvars))
+    for j in range(0,nregions):
+        reexposed_over_time[j,0,:] = [np_sum(e.RE_nr) + np_sum(e.RE_r) for e in epi[j]]    
+
     comm_spread_frac_over_time = np_zeros((nregions, ntimesteps, nvars))
     for j in range(0,nregions):
         comm_spread_frac_over_time[j,0,:] = [e.comm_spread_frac for e in epi[j]]
@@ -215,8 +219,6 @@ def epidemiology_model():
         #Community spread
         for j in range(0, nregions):
             comm_spread_frac_allvars[j,:] = [e.comm_spread_frac for e in epi[j]]
-        if i==20:
-            print(i)
 
         # Loop of variants
         for v in range(0,nvars):
@@ -248,6 +250,7 @@ def epidemiology_model():
                     deaths[j,v] += epi[j][v].new_deaths
                     #susceptible_over_time[j,i,v] = epi[j][v].S
                     exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
+                    reexposed_over_time[j,i,v] = np_sum(epi[j][v].RE_nr) + np_sum(epi[j][v].RE_r)
                     infective_over_time[j,i,v] = epi[j][v].Itot
                     deaths_over_time[j,i,v] = deaths[j,v]
                     recovered_over_time[j,i,v] = np_sum(epi[j][v].R)
