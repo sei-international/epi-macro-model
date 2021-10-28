@@ -155,7 +155,8 @@ class SEIR_matrix:
         self.I_r[1] = self.population_at_risk_frac * initial_infected
 
         # Recovered: Assume none at initial time step
-        self.R = np_zeros(self.recovered_time_period+1)
+        self.R_nr = np_zeros(self.recovered_time_period+1)
+        self.R_r = np_zeros(self.recovered_time_period+1)
         self.recovered_pool = 0
 
         # Re-exposed:
@@ -163,7 +164,7 @@ class SEIR_matrix:
         self.RE_r  = np_zeros(self.reexposed_time_period+1)
 
         # Susceptible population
-        self.S = self.N - self.Itot - np_sum(self.R)
+        self.S = self.N - self.Itot - np_sum(self.R_nr) - np_sum(self.R_r)
         self.S_prev = self.S
 
         self.new_deaths = 0
@@ -389,7 +390,6 @@ class SEIR_matrix:
         # Do this update after accounting for newly exposed
         vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= vaccinated
-        
 
         #------------------------------------------------------------------------------------------------
         # 4: Separate recovered and deceased into recovered/deceased pools and update total population
@@ -403,23 +403,29 @@ class SEIR_matrix:
         self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
         self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
         self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
-        
+        self.recovered_pool_nr = recovered_or_deceased_nr - m_nr * recovered_or_deceased_nr 
+        self.recovered_pool_r = recovered_or_deceased_r - m_r * recovered_or_deceased_r
+
         #------------------------------------------------------------------------------------------------
         # 5: Update recovered pool and total population
         #------------------------------------------------------------------------------------------------
-        new_reexposed_nr = (1 - self.population_at_risk_frac) * self.rec2inf2[self.recovered_time_period-1]* self.R[self.recovered_time_period] + (1 - self.population_at_risk_frac) * self.rec2inf2[self.recovered_time_period-2]* self.R[self.recovered_time_period-1]
-        new_reexposed_r = self.population_at_risk_frac * self.rec2inf2[self.recovered_time_period-1]* self.R[self.recovered_time_period] + self.population_at_risk_frac * self.rec2inf2[self.recovered_time_period-2]* self.R[self.recovered_time_period-1]
-        self.R[self.recovered_time_period] = self.R[self.recovered_time_period]+self.R[self.recovered_time_period-1] - new_reexposed_nr - new_reexposed_r
+        new_reexposed_nr = self.rec2inf2[self.recovered_time_period-1]* self.R_nr[self.recovered_time_period] +  self.rec2inf2[self.recovered_time_period-2]* self.R_nr[self.recovered_time_period-1]
+        new_reexposed_r = self.rec2inf2[self.recovered_time_period-1]* self.R_r[self.recovered_time_period] +  self.rec2inf2[self.recovered_time_period-2]* self.R_r[self.recovered_time_period-1]
+        self.R_nr[self.recovered_time_period] = self.R_nr[self.recovered_time_period]+self.R_nr[self.recovered_time_period-1] - new_reexposed_nr 
+        self.R_r[self.recovered_time_period] = self.R_r[self.recovered_time_period]+self.R_r[self.recovered_time_period-1] - new_reexposed_r
         self.RE_nr[1] += new_reexposed_nr
         self.RE_r[1] += new_reexposed_r
         for j in range(self.recovered_time_period-1, 1, -1):
-            new_reexposed_nr = (1 - self.population_at_risk_frac) * self.rec2inf2[j-2]* self.R[j-1]
-            new_reexposed_r = self.population_at_risk_frac * self.rec2inf2[j-2]* self.R[j-1]
-            self.R[j]=self.R[j-1] - new_reexposed_nr - new_reexposed_r 
+            new_reexposed_nr = self.rec2inf2[j-2]* self.R_nr[j-1]
+            new_reexposed_r  = self.rec2inf2[j-2]* self.R_r[j-1]
+            self.R_nr[j]=self.R_nr[j-1] - new_reexposed_nr 
+            self.R_r[j]=self.R_r[j-1] - - new_reexposed_r 
             self.RE_nr[1] += new_reexposed_nr
             self.RE_r[1] += new_reexposed_r
-        self.R[1] = self.recovered_pool
-        self.R[1] += vaccinated
+        self.R_nr[1] = self.recovered_pool_nr
+        self.R_r[1] = self.recovered_pool_r
+        self.R_nr[1] += (1-self.population_at_risk_frac) * vaccinated
+        self.R_r[1] += self.population_at_risk_frac *vaccinated
 
         # Update N
         self.N_prev = self.N

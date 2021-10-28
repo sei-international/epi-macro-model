@@ -253,7 +253,7 @@ def epidemiology_model():
                     reexposed_over_time[j,i,v] = np_sum(epi[j][v].RE_nr) + np_sum(epi[j][v].RE_r)
                     infective_over_time[j,i,v] = epi[j][v].Itot
                     deaths_over_time[j,i,v] = deaths[j,v]
-                    recovered_over_time[j,i,v] = np_sum(epi[j][v].R)
+                    recovered_over_time[j,i,v] = np_sum(epi[j][v].R_nr) + np_sum(epi[j][v].R_r)
                     cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
                     comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                     mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
