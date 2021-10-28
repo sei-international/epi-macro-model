@@ -58,12 +58,14 @@ class SEIR_matrix:
         self.invisible_fraction = seir_params['unobserved fraction of cases']
 
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
+        self.Rexp2Rinf = np_array(seir_params['matrix-params']['prob reinfected given reexposed'])
 
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
         else:
             rr_for_r = 1.0
+        self.rec2inf2 = np_array(seir_params['matrix-params']['prob of reinfection given recovered or inocculated'])
         recover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_nr)/(1 - self.case_fatality_rate_r)
         adj_factor = 1 + (1 + recover_rate_ratio) * self.population_at_risk_frac
         self.inf2rd_nr = inf2rd_ave/adj_factor
@@ -90,6 +92,8 @@ class SEIR_matrix:
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
         self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
+        self.recovered_time_period = len(self.rec2inf2)
+        self.reexposed_time_period = len(self.Rexp2Rinf)
         # Mean infectious period is calculated based on the matrix model
         self.mean_infectious_period = 0
         P = 1
@@ -151,11 +155,15 @@ class SEIR_matrix:
         self.I_r[1] = self.population_at_risk_frac * initial_infected
 
         # Recovered: Assume none at initial time step
-        self.R = 0
+        self.R = np_zeros(self.recovered_time_period+1)
         self.recovered_pool = 0
 
+        # Re-exposed:
+        self.RE_nr = np_zeros(self.reexposed_time_period+1)
+        self.RE_r  = np_zeros(self.reexposed_time_period+1)
+
         # Susceptible population
-        self.S = self.N - self.Itot - self.R
+        self.S = self.N - self.Itot - np_sum(self.R)
         self.S_prev = self.S
 
         self.new_deaths = 0
@@ -342,6 +350,7 @@ class SEIR_matrix:
         None.
 
         """
+
         #------------------------------------------------------------------------------------------------
         # 1: Calculate new recovered or deceased and shift infected pool
         #------------------------------------------------------------------------------------------------
@@ -380,7 +389,7 @@ class SEIR_matrix:
         # Do this update after accounting for newly exposed
         vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= vaccinated
-        self.R += vaccinated
+        
 
         #------------------------------------------------------------------------------------------------
         # 4: Separate recovered and deceased into recovered/deceased pools and update total population
@@ -394,13 +403,30 @@ class SEIR_matrix:
         self.new_deaths = m_nr * recovered_or_deceased_nr + m_r * recovered_or_deceased_r
         self.curr_mortality_rate = self.new_deaths/(recovered_or_deceased_nr + recovered_or_deceased_r + self.eps)
         self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
-        # Update recovered pool and total population
-        self.R += self.recovered_pool
+        
+        #------------------------------------------------------------------------------------------------
+        # 5: Update recovered pool and total population
+        #------------------------------------------------------------------------------------------------
+        new_reexposed_nr = (1 - self.population_at_risk_frac) * self.rec2inf2[self.recovered_time_period-1]* self.R[self.recovered_time_period] + (1 - self.population_at_risk_frac) * self.rec2inf2[self.recovered_time_period-2]* self.R[self.recovered_time_period-1]
+        new_reexposed_r = self.population_at_risk_frac * self.rec2inf2[self.recovered_time_period-1]* self.R[self.recovered_time_period] + self.population_at_risk_frac * self.rec2inf2[self.recovered_time_period-2]* self.R[self.recovered_time_period-1]
+        self.R[self.recovered_time_period] = self.R[self.recovered_time_period]+self.R[self.recovered_time_period-1] - new_reexposed_nr - new_reexposed_r
+        self.RE_nr[1] += new_reexposed_nr
+        self.RE_r[1] += new_reexposed_r
+        for j in range(self.recovered_time_period-1, 1, -1):
+            new_reexposed_nr = (1 - self.population_at_risk_frac) * self.rec2inf2[j-2]* self.R[j-1]
+            new_reexposed_r = self.population_at_risk_frac * self.rec2inf2[j-2]* self.R[j-1]
+            self.R[j]=self.R[j-1] - new_reexposed_nr - new_reexposed_r 
+            self.RE_nr[1] += new_reexposed_nr
+            self.RE_r[1] += new_reexposed_r
+        self.R[1] = self.recovered_pool
+        self.R[1] += vaccinated
+
+        # Update N
         self.N_prev = self.N
         self.N -= self.new_deaths
 
         #------------------------------------------------------------------------------------------------
-        # 4: Update community spread fraction
+        # 6: Update community spread fraction
         #------------------------------------------------------------------------------------------------
         # For this calculation, take visitors and internal mobility into account
         ni_addl = (internal_mobility_rate * self.Itot + infected_visitors)/self.n_loc

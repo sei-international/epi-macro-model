@@ -215,6 +215,8 @@ def epidemiology_model():
         #Community spread
         for j in range(0, nregions):
             comm_spread_frac_allvars[j,:] = [e.comm_spread_frac for e in epi[j]]
+        if i==20:
+            print(i)
 
         # Loop of variants
         for v in range(0,nvars):
@@ -248,7 +250,7 @@ def epidemiology_model():
                     exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
                     infective_over_time[j,i,v] = epi[j][v].Itot
                     deaths_over_time[j,i,v] = deaths[j,v]
-                    recovered_over_time[j,i,v] = epi[j][v].R
+                    recovered_over_time[j,i,v] = np_sum(epi[j][v].R)
                     cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
                     comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                     mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
