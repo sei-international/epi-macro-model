@@ -34,7 +34,7 @@ for opt, arg in opts:
 
 print('Running epidemiological model...')
 try:
-    nvars, variant_params, nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, hosp_ndx = epidemiology_model()
+    nvars, variant_params, nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, reexposed, reinfective, hosp_ndx, epi = epidemiology_model()
 for v in range(0,nvars):
     for j in range(0,nrgn):
         info = rgns[j]
@@ -43,7 +43,9 @@ for v in range(0,nvars):
              'exposed': exposed[j,0:end-start,v],
              'infected': infective[j,0:end-start,v],
              'recovered': recovered[j,0:end-start,v],
-             'died': deaths[j,0:end-start,v]}
+             'died': deaths[j,0:end-start,v],
+             'reexposed': reexposed[j,0:end-start,v],
+             'reinfected': reinfective[j,0:end-start,v]}
         DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '_' + re.sub(r'\s+', '_', variant_params[v]['name']) + '.csv', index=False)
 except Exception:
     traceback.print_exc()

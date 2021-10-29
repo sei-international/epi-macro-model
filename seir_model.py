@@ -55,17 +55,32 @@ class SEIR_matrix:
             self.case_fatality_rate_nr = seir_params['case fatality rate']['average']
             self.case_fatality_rate_r = self.case_fatality_rate_nr
 
+        if 'at risk' in seir_params['case fatality rate among reinfections']:
+            self.case_fatality_rate_reinf_r = seir_params['case fatality rate among reinfections']['at risk']
+            self.case_fatality_rate_reinf_nr = (seir_params['case fatality rate among reinfections']['average'] - self.population_at_risk_frac * self.case_fatality_rate_r)/(1 - self.population_at_risk_frac)
+            if self.case_fatality_rate_reinf_nr < 0:
+                raise ValueError("Case fatality arising from at-risk population alone exceeds the average among reinfections")
+            if self.case_fatality_rate_reinf_r < self.case_fatality_rate_reinf_nr:
+                raise ValueError("Case fatality rate for at-risk population should exceed the average rate among reinfections")
+        else:
+            self.case_fatality_rate_reinf_nr = seir_params['case fatality rate among reinfections']['average']
+            self.case_fatality_rate_reinf_r = self.case_fatality_rate_reinf_nr
+
+
+
         self.invisible_fraction = seir_params['unobserved fraction of cases']
 
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
         self.rexp2rinf = np_array(seir_params['matrix-params']['prob reinfected given reexposed'])
 
+        
+        
+        self.rec2inf2 = np_array(seir_params['matrix-params']['prob of reexposure given recovered or inocculated'])
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
         else:
             rr_for_r = 1.0
-        self.rec2inf2 = np_array(seir_params['matrix-params']['prob of reexposure given recovered or inocculated'])
         recover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_nr)/(1 - self.case_fatality_rate_r)
         adj_factor = 1 + (1 + recover_rate_ratio) * self.population_at_risk_frac
         self.inf2rd_nr = inf2rd_ave/adj_factor
@@ -73,6 +88,17 @@ class SEIR_matrix:
         if max(self.inf2rd_r) >= 1:
             raise ValueError("Imputed recovery rate of population at risk exceeds 100% for at least one time step")
 
+        rinf2imm_ave = np_array(seir_params['matrix-params']['prob immunity or death given reinfected']) 
+        if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
+            rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk among reinfected']
+        else:
+            rr_for_r = 1.0
+        rerecover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_reinf_nr)/(1 - self.case_fatality_rate_reinf_r)
+        adj_factor = 1 + (1 + rerecover_rate_ratio) * self.population_at_risk_frac
+        self.rinf2imm_nr = rinf2imm_ave/adj_factor
+        self.rinf2imm_r = recover_rate_ratio * self.rinf2imm_nr
+        if max(self.inf2rd_r) >= 1:
+            raise ValueError("Imputed recovery rate of reinfected population at risk exceeds 100% for at least one time step")
         #-------------------------------------------------------------------
         # Parameters for the statistical model
         #-------------------------------------------------------------------
@@ -94,6 +120,7 @@ class SEIR_matrix:
         self.exposed_time_period = len(self.exp2inf)
         self.recovered_time_period = len(self.rec2inf2)
         self.reexposed_time_period = len(self.rexp2rinf)
+        self.reinfected_time_period = len(rinf2imm_ave)
         # Mean infectious period is calculated based on the matrix model
         self.mean_infectious_period = 0
         P = 1
@@ -140,6 +167,8 @@ class SEIR_matrix:
         #initial_infected = initial_values['infected fraction'] * self.N/1000 # Entered per 1000
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
+        self.RItot = 0
+        self.RItot_prev = 0
         self.N_prev = self.N
 
         # Exposed, either not at risk (nr) or at risk (r)  ccw(initialised at 0)
@@ -356,7 +385,20 @@ class SEIR_matrix:
 
         """
         #------------------------------------------------------------------------------------------------
-        # 1: Shift exposed pool and calculated new infected
+        # 1: Shift reinfected pool and calculated new immune after second infectin
+        #------------------------------------------------------------------------------------------------
+        immune_or_deceased_nr = self.RI_nr[self.reinfected_time_period]
+        immune_or_deceased_r = self.RI_r[self.reinfected_time_period]
+        for j in range(self.reinfected_time_period,1,-1):
+            immune_or_deceased_nr = immune_or_deceased_nr + self.rinf2imm_nr[j-1]*self.RI_nr[j-1]
+            immune_or_deceased_r = immune_or_deceased_r + self.rinf2imm_r[j-1]*self.RI_r[j-1]
+            self.RI_nr[j] = max((1 - self.rinf2imm_nr[j-1]) * self.RI_nr[j-1], 0)
+            self.RI_r[j] = max((1 - self.rinf2imm_r[j-1]) * self.RI_r[j-1], 0)
+        self.RI_nr[1] = self.RE_nr[self.reexposed_time_period]
+        self.RI_r[1] = self.RE_r[self.reexposed_time_period]
+
+        #------------------------------------------------------------------------------------------------
+        # 1: Shift reexposed pool and calculated new reinfected
         #------------------------------------------------------------------------------------------------
         for j in range(self.reexposed_time_period, 1, -1):
              new_reinfected_nr = self.rexp2rinf[j-1] * self.RE_nr[j - 1]
@@ -365,12 +407,8 @@ class SEIR_matrix:
              self.RE_r[j] = self.RE_r[j - 1] - new_reinfected_r
              self.RI_nr[1] = self.RI_nr[1] +  new_reinfected_nr
              self.RI_r[1] = self.RI_r[1] + new_reinfected_r
-        print('self.RE_nr: ', self.RE_nr)
-        print('self.RE_r: ', self.RE_r)
-        print('self.RI_nr: ', self.RI_nr)
-        print('self.RI_r', self.RI_r)
-        # #self.Itot_prev = self.Itot
-        #self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
+        self.RItot_prev = self.RItot
+        self.RItot = np_sum(self.RI_nr) + np_sum(self.RI_r)
 
         #------------------------------------------------------------------------------------------------
         # 1: Calculate new recovered or deceased and shift infected pool
@@ -397,6 +435,7 @@ class SEIR_matrix:
             self.I_r[1] = self.I_r[1] + new_infected_r
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
+        
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
         #------------------------------------------------------------------------------------------------
@@ -425,7 +464,7 @@ class SEIR_matrix:
         self.recovered_pool = recovered_or_deceased_nr + recovered_or_deceased_r - self.new_deaths
         self.recovered_pool_nr = recovered_or_deceased_nr - m_nr * recovered_or_deceased_nr 
         self.recovered_pool_r = recovered_or_deceased_r - m_r * recovered_or_deceased_r
-
+    
         #------------------------------------------------------------------------------------------------
         # 5: Update recovered pool and total population
         #------------------------------------------------------------------------------------------------
