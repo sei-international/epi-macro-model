@@ -271,7 +271,7 @@ def epidemiology_model():
         for j in range(0, nregions):
             # Infected by regions
             for e in epi[j]:
-                Itot_allvars[j]+= e.Itot # add total infected for each variant in that region
+                Itot_allvars[j]+= e.Itot_incl_reinf # add total infected for each variant in that region
             hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * Itot_allvars[j]/baseline_hosp[j]
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this

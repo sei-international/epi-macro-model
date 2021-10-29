@@ -106,19 +106,19 @@ class SEIR_matrix:
         self.coeff_of_variation_i= seir_params['statistical-model']['coeff of variation of infected where spreading']
         # for first infection
         if 'at risk' in seir_params['fraction of observed cases requiring hospitalization']:
-            fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
-            fraction_of_visible_requiring_hospitalization_nr = (seir_params['fraction of observed cases requiring hospitalization']['average'] - self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r)/(1 - self.population_at_risk_frac)
+            self.fraction_of_visible_requiring_hospitalization_r = seir_params['fraction of observed cases requiring hospitalization']['at risk']
+            self.fraction_of_visible_requiring_hospitalization_nr = (seir_params['fraction of observed cases requiring hospitalization']['average'] - self.population_at_risk_frac * self.fraction_of_visible_requiring_hospitalization_r)/(1 - self.population_at_risk_frac)
         else:
-            fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['average']
-            fraction_of_visible_requiring_hospitalization_r = fraction_of_visible_requiring_hospitalization_nr
+            self.fraction_of_visible_requiring_hospitalization_nr = seir_params['fraction of observed cases requiring hospitalization']['average']
+            self.fraction_of_visible_requiring_hospitalization_r = self.fraction_of_visible_requiring_hospitalization_nr
         self.overflow_hospitalized_mortality_rate_factor = seir_params['case fatality rate']['overflow hospitalized mortality rate factor']
         #for reinfection
         if 'at risk' in seir_params['fraction of observed reinfection cases requiring hospitalization']:
-            fraction_of_visible_reinfections_requiring_hospitalization_r = seir_params['fraction of observed reinfection cases requiring hospitalization']['at risk']
-            fraction_of_visible_reinfections_requiring_hospitalization_nr = (seir_params['fraction of observed reinfection cases requiring hospitalization']['average'] - self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r)/(1 - self.population_at_risk_frac)
+            self.fraction_of_visible_reinfections_requiring_hospitalization_r = seir_params['fraction of observed reinfection cases requiring hospitalization']['at risk']
+            self.fraction_of_visible_reinfections_requiring_hospitalization_nr = (seir_params['fraction of observed reinfection cases requiring hospitalization']['average'] - self.population_at_risk_frac * self.fraction_of_visible_reinfections_requiring_hospitalization_r)/(1 - self.population_at_risk_frac)
         else:
-            fraction_of_visible_reinfections_requiring_hospitalization_nr = seir_params['fraction of observed reinfected cases requiring hospitalization']['average']
-            fraction_of_visible_reinfections_requiring_hospitalization_r = fraction_of_visible_requiring_hospitalization_nr
+            self.fraction_of_visible_reinfections_requiring_hospitalization_nr = seir_params['fraction of observed reinfected cases requiring hospitalization']['average']
+            self.fraction_of_visible_reinfections_requiring_hospitalization_r =self. fraction_of_visible_reinfections_requiring_hospitalization_nr
         if 'overflow hospitalized mortality rate factor' in seir_params['case fatality rate among reinfections']:
             self.overflow_hospitalized_mortality_rate_factor_reinfections = seir_params['case fatality rate among reinfections']['overflow hospitalized mortality rate factor']
         else:
@@ -140,14 +140,14 @@ class SEIR_matrix:
             self.mean_infectious_period += (i + 1) * P * inf2rd_ave[i - 1]
             P *= 1 - inf2rd_ave[i - 1]
 
-        self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate_nr / fraction_of_visible_requiring_hospitalization_nr
-        self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_r / fraction_of_visible_requiring_hospitalization_r
+        self.baseline_hospitalized_mortality_rate_nr = self.case_fatality_rate_nr / self.fraction_of_visible_requiring_hospitalization_nr
+        self.baseline_hospitalized_mortality_rate_r = self.case_fatality_rate_r / self.fraction_of_visible_requiring_hospitalization_r
 
-        self.baseline_hospitalized_mortality_rate_reinf_nr = self.case_fatality_rate_reinf_nr / fraction_of_visible_requiring_hospitalization_nr
-        self.baseline_hospitalized_mortality_rate_reinf_r = self.case_fatality_rate_reinf_r / fraction_of_visible_requiring_hospitalization_r
+        self.baseline_hospitalized_mortality_rate_reinf_nr = self.case_fatality_rate_reinf_nr / self.fraction_of_visible_reinfections_requiring_hospitalization_nr
+        self.baseline_hospitalized_mortality_rate_reinf_r = self.case_fatality_rate_reinf_r / self.fraction_of_visible_reinfections_requiring_hospitalization_r
 
-        self.ave_fraction_of_visible_requiring_hospitalization = (1 - self.population_at_risk_frac) * fraction_of_visible_requiring_hospitalization_nr + \
-                                        self.population_at_risk_frac * fraction_of_visible_requiring_hospitalization_r
+        self.ave_fraction_of_visible_requiring_hospitalization = (1 - self.population_at_risk_frac) * self.fraction_of_visible_requiring_hospitalization_nr + \
+                                        self.population_at_risk_frac * self.fraction_of_visible_requiring_hospitalization_r
 
         self.base_individual_exposure_rate = self.R0/self.mean_infectious_period
 
@@ -182,6 +182,8 @@ class SEIR_matrix:
         #initial_infected = initial_values['infected fraction'] * self.N/1000 # Entered per 1000
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
+        self.Itot_incl_reinf_prev = self.Itot
+        self.Itot_incl_reinf = self.Itot
         self.RItot = 0
         self.RItot_prev = 0
         self.N_prev = self.N
@@ -288,7 +290,12 @@ class SEIR_matrix:
         alpha = alpha_plus_beta * infected_fraction
         beta = alpha_plus_beta - alpha
 
-        hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / self.ave_fraction_of_visible_requiring_hospitalization
+        # average fraction requiring hospitalisation among first infections and reinfections
+        current_fraction_of_visible_reinfections_requiring_hospitalization = (np_sum(self.R_nr)/np_sum(self.R_nr+self.R_r)) * self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
+                    (np_sum(self.R_r)/np_sum(self.R_nr+self.R_r)) * self.fraction_of_visible_reinfections_requiring_hospitalization_r # also has to be moved to where R_r and R! double check this 
+        current_fraction_of_all_visible_requiring_hospitalization = self.ave_fraction_of_visible_requiring_hospitalization * self.Itot + \
+                    current_fraction_of_visible_reinfections_requiring_hospitalization * self.RItot / (self.Itot +self.RItot)
+        hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / current_fraction_of_all_visible_requiring_hospitalization
 
         # Calculate mean exceedence fraction assuming a beta distribution
         mean_exceedance_per_infected_fraction = 1 - betainc(alpha + 1, beta, hospital_p_i_threshold) - \
@@ -299,7 +306,7 @@ class SEIR_matrix:
         if first_infection==True:
             h = self.ave_fraction_of_visible_requiring_hospitalization
         if reinfection==True: 
-            h = self.ave_fraction_of_visible_requiring_hospitalization
+            h = current_fraction_of_visible_reinfections_requiring_hospitalization
         
         overflow_corr = (1 - mean_exceedance_per_infected_fraction) + mean_exceedance_per_infected_fraction * self.overflow_hospitalized_mortality_rate_factor
         # Fraction of visible requiring hospitalisation and rate for population not at risk and at risk 
@@ -338,7 +345,7 @@ class SEIR_matrix:
 
         """
         # Calculate total infected individuals, taking visitors into account
-        n_i = self.Itot_prev + infected_visitors
+        n_i = self.Itot_incl_reinf_prev + infected_visitors
         # First, check if there are no infected individuals either in the population or newly introduced
         if n_i == 0 and self.comm_spread_frac == 0:
             return [0.0, 0.0]
@@ -440,7 +447,7 @@ class SEIR_matrix:
         if self.comm_spread_frac == 0:
             infected_fraction = 0
         else:
-            infected_fraction = Itot_rgn_allvars/(max(comm_spread_frac_allvars) * self.N + self.eps) # !! Itot_rgn_allvars will need to be updated to include reinfective !!
+            infected_fraction = Itot_rgn_allvars/(max(comm_spread_frac_allvars) * self.N + self.eps) 
         m_nr_reinf, m_r_reinf = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, 2)
         self.new_deaths_reinf = m_nr_reinf * immune_or_deceased_nr + m_r_reinf * immune_or_deceased_r
         self.curr_mortality_rate_reinf = self.new_deaths_reinf/(immune_or_deceased_nr + immune_or_deceased_r + self.eps)
@@ -494,6 +501,8 @@ class SEIR_matrix:
             self.I_r[1] = self.I_r[1] + new_infected_r
         self.Itot_prev = self.Itot
         self.Itot = np_sum(self.I_nr) + np_sum(self.I_r)
+        self.Itot_incl_reinf_prev=self.Itot_incl_reinf
+        self.Itot_incl_reinf= self.Itot + self.RItot
 
         #------------------------------------------------------------------------------------------------
         # 3: Update new exposures and susceptible pool, taking vaccinations into account
@@ -553,5 +562,5 @@ class SEIR_matrix:
         # 6: Update community spread fraction
         #------------------------------------------------------------------------------------------------
         # For this calculation, take visitors and internal mobility into account
-        ni_addl = (internal_mobility_rate * self.Itot + infected_visitors)/self.n_loc
+        ni_addl = (internal_mobility_rate * self.Itot_incl_reinf + infected_visitors)/self.n_loc
         self.comm_spread_frac += (1 - self.comm_spread_frac) * self.p_spread(ni_addl, pub_health_factor)
