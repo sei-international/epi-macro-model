@@ -151,11 +151,14 @@ def epidemiology_model():
     Itot_allvars=np_zeros(nregions)
     comm_spread_frac_allvars = np_zeros((nregions, nvars))
     deaths = np_zeros((nregions, nvars))
+    deaths_reinf = np_zeros((nregions, nvars))
     cumulative_cases = np_zeros((nregions, nvars))
 
     deaths_over_time = np_zeros((nregions, ntimesteps, nvars))
     new_deaths_over_time = np_zeros((nregions, ntimesteps, nvars))
+    deaths_reinf_over_time = np_zeros((nregions, ntimesteps, nvars))
     recovered_over_time = np_zeros((nregions, ntimesteps, nvars))
+    immune_over_time = np_zeros((nregions, ntimesteps, nvars))
     mortality_rate_over_time = np_zeros((nregions, ntimesteps, nvars))
 
     hospitalization_index_region = np_ones(nregions)
@@ -249,13 +252,16 @@ def epidemiology_model():
                     # Update values for indicator graphs
                     new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
                     deaths[j,v] += epi[j][v].new_deaths
+                    deaths_reinf[j,v] += epi[j][v].new_deaths_reinf
                     #susceptible_over_time[j,i,v] = epi[j][v].S
                     exposed_over_time[j,i,v] = np_sum(epi[j][v].E_nr) + np_sum(epi[j][v].E_r)
                     reexposed_over_time[j,i,v] = np_sum(epi[j][v].RE_nr) + np_sum(epi[j][v].RE_r)
                     infective_over_time[j,i,v] = epi[j][v].Itot
                     reinfective_over_time[j,i,v] = epi[j][v].RItot
                     deaths_over_time[j,i,v] = deaths[j,v]
+                    deaths_reinf_over_time[j,i,v] = deaths_reinf[j,v]
                     recovered_over_time[j,i,v] = np_sum(epi[j][v].R_nr) + np_sum(epi[j][v].R_r)
+                    immune_over_time[j,i,v] = epi[j][v].Im
                     cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
                     comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                     mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
@@ -281,5 +287,5 @@ def epidemiology_model():
                 susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
-       exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, reexposed_over_time, reinfective_over_time, \
-       hospitalization_index,epi
+       exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
+       immune_over_time, hospitalization_index, epi

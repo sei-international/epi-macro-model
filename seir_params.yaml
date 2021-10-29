@@ -27,6 +27,10 @@
       average: 0.057
       at risk: 0.070
 
+  fraction of observed reinfection cases requiring hospitalization:
+      average: 0.38
+      at risk: 0.60
+
   matrix-params:
       prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
       prob recover or death given infected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
@@ -88,6 +92,10 @@
   case fatality rate among reinfections:
       average: 0.057
       at risk: 0.070
+
+  fraction of observed reinfection cases requiring hospitalization:
+      average: 0.38
+      at risk: 0.60
 
   matrix-params:
       prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
