@@ -247,7 +247,8 @@ def epidemiology_model():
                                   vaccination_max_doses[i],
                                   vaccinate_at_risk,
                                   Itot_allvars[j],
-                                  comm_spread_frac_allvars[j])
+                                  comm_spread_frac_allvars[j],
+                                  nvars)
 
                     # Update values for indicator graphs
                     new_deaths_over_time[j,i,v] = epi[j][v].new_deaths

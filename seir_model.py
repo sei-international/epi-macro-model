@@ -385,7 +385,9 @@ class SEIR_matrix:
         Parameters
         ----------
         max_vaccine_doses: float
-            DESCRIPTION.
+            Number of doses available
+        vaccinate_at_risk_first: bool
+            Is at risk population vaccinated first?
 
         Returns
         -------
@@ -398,10 +400,23 @@ class SEIR_matrix:
         """
 
         vaccinations = min(self.S, max_vaccine_doses)
-        if vaccinate_at_risk_first:
-            self.population_at_risk_frac = max(0, self.population_at_risk_frac * self.S - vaccinations)/(self.S + self.eps)
 
-        return vaccinations
+        if vaccinate_at_risk_first:
+            vaccinations_nr = 0
+            vaccinations_r  = 0
+            if self.population_at_risk_frac * self.S > vaccinations:
+                vaccinations_r  = vaccinations
+            if (self.population_at_risk_frac * self.S < 0 ) & (self.population_at_risk_frac * self.S < vaccinations):
+                vaccinations_r  = self.population_at_risk_frac * self.S
+                vaccinations_nr = vaccinations - self.population_at_risk_frac * self.S
+            if self.population_at_risk_frac * self.S <= 0:  
+                vaccinations_nr = vaccinations 
+            self.population_at_risk_frac = max(0, self.population_at_risk_frac * self.S - vaccinations)/(self.S + self.eps)
+        else:
+            vaccinations_nr = (1-self.population_at_risk_frac) * vaccinations
+            vaccinations_r  = self.population_at_risk_frac * vaccinations 
+
+        return vaccinations_nr, vaccinations_r
 
 
     def update(self, infected_visitors: float,
@@ -413,7 +428,8 @@ class SEIR_matrix:
                max_vaccine_doses: float,
                vaccinate_at_risk_first: bool,
                Itot_rgn_allvars: float,
-               comm_spread_frac_allvars:float):
+               comm_spread_frac_allvars:float,
+               nvariants: int):
         """
 
 
@@ -430,6 +446,16 @@ class SEIR_matrix:
         beds_per_1000 : float
             DESCRIPTION.
         max_vaccine_doses: float
+            DESCRIPTION.
+        max_vaccine_doses: float
+            DESCRIPTION.
+        vaccinate_at_risk_first: float
+            DESCRIPTION.
+        Itot_rgn_allvars: float
+            DESCRIPTION.
+        comm_spread_frac_allvars: float
+            DESCRIPTION.
+        nvariants: int
             DESCRIPTION.
 
         Returns
@@ -527,8 +553,9 @@ class SEIR_matrix:
         self.S_prev = self.S
         self.S -= self.E_nr[1] + self.E_r[1]
         # Do this update after accounting for newly exposed
-        vaccinated = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
-        self.S -= vaccinated
+        vaccinated_nr,  vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
+        self.S -= (vaccinated_nr + vaccinated_r)
+
 
         #------------------------------------------------------------------------------------------------
         # 4: Separate recovered and deceased into recovered/deceased pools and update total population
@@ -563,9 +590,13 @@ class SEIR_matrix:
             self.RE_r[1] += new_reexposed_r
         self.R_nr[1] = self.recovered_pool_nr
         self.R_r[1] = self.recovered_pool_r
-        if self.variant=="Delta variant":
-            self.R_nr[1] += (1-self.population_at_risk_frac) * vaccinated
-            self.R_r[1] += self.population_at_risk_frac * vaccinated
+        if nvariants>1:
+            if self.variant=="Delta variant":
+                self.R_nr[1] += vaccinated_nr
+                self.R_r[1] += vaccinated_r
+        else:
+            self.R_nr[1] += vaccinated_nr
+            self.R_r[1] += vaccinated_r
 
         # Update N
         self.N_prev = self.N
