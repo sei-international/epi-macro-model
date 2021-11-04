@@ -56,8 +56,7 @@ def epidemiology_model():
     ntimesteps = end_time - start_time
 
     # All the epidemiological regional models will give the same values for these parameters
-    hosp_per_infective = (1 - epi[0][0].invisible_fraction) * epi[0][0].ave_fraction_of_visible_requiring_hospitalization
-    epi_invisible_fraction = epi[0][0].invisible_fraction
+    epi_invisible_fraction = epi[0][0].invisible_fraction_1stinfection
 
     normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
     max_reduction_in_normal_bed_occupancy = common_params['bed occupancy']['max reduction']
@@ -226,6 +225,7 @@ def epidemiology_model():
 
         # Loop of variants
         for v in range(0,nvars):
+
             # Loop over regions
             for j in range(0, nregions):
                 intl_infected_visitors = intl_visitors[j] * (epi[j][v].proportion_global_infected[i]*global_infection_rate[i]) * min(0, 1 - PHA_travel_restrictions)
@@ -262,17 +262,21 @@ def epidemiology_model():
                     deaths_reinf_over_time[j,i,v] = deaths_reinf[j,v]
                     recovered_over_time[j,i,v] = np_sum(epi[j][v].R_nr) + np_sum(epi[j][v].R_r)
                     immune_over_time[j,i,v] = epi[j][v].Im
-                    cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1])
+                    cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction_1stinfection) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1]) + \
+                        (1 - epi[j][v].invisible_fraction_reinfection) * (epi[j][v].RI_nr[1] + epi[j][v].RI_r[1])
                     comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                     mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
 
         # Calculate hospitalisation index across variants
-        Itot_allvars=np_zeros(nregions)
+        hospitalized=np_zeros(nregions)
         for j in range(0, nregions):
             # Infected by regions
             for e in epi[j]:
-                Itot_allvars[j]+= e.Itot_incl_reinf # add total infected for each variant in that region
-            hospitalization_index_region[j] = bed_occupancy_factor + hosp_per_infective * Itot_allvars[j]/baseline_hosp[j]
+                hosp_per_infective_1stinfections = (1 - e.invisible_fraction_1stinfection) * e.ave_fraction_of_visible_1stinfections_requiring_hospitalization
+                hosp_per_infective_reinfections  = (1 - e.invisible_fraction_reinfection) * e.ave_fraction_of_visible_reinfections_requiring_hospitalization
+                hospitalized[j] += ( hosp_per_infective_1stinfections * np_sum(e.I_r + e.I_nr) + hosp_per_infective_reinfections * np_sum(e.RI_r + e.RI_nr) )
+            hospitalization_index_region[j] = bed_occupancy_factor + hospitalized[j] /baseline_hosp[j] 
+
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
