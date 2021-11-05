@@ -303,8 +303,8 @@ class SEIR_matrix:
         beta = alpha_plus_beta - alpha
 
         # average fraction requiring hospitalisation among first infections and reinfections
-        self.ave_fraction_of_visible_reinfections_requiring_hospitalization = (1- self.population_at_risk_frac )* self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
-                        self.population_at_risk_frac * self.fraction_of_visible_reinfections_requiring_hospitalization_r 
+        self.ave_fraction_of_visible_reinfections_requiring_hospitalization = np_sum(self.RI_nr)/(np_sum(self.RI_nr+self.RI_r)+self.eps)* self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
+                        np_sum(self.RI_r)/(np_sum(self.RI_nr+self.RI_r)+self.eps) * self.fraction_of_visible_reinfections_requiring_hospitalization_r 
         current_fraction_of_all_visible_requiring_hospitalization = (self.ave_fraction_of_visible_1stinfections_requiring_hospitalization * self.Itot + \
                     self.ave_fraction_of_visible_reinfections_requiring_hospitalization * self.RItot) / (self.Itot +self.RItot)
         hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / current_fraction_of_all_visible_requiring_hospitalization
@@ -528,8 +528,6 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         # 4: Shift recovered pool and calculated new reexposed
         #------------------------------------------------------------------------------------------------
-        #self.R_nr[self.recovered_time_period] = self.R_nr[self.recovered_time_period]+self.R_nr[self.recovered_time_period-1] - new_reexposed_nr 
-        #self.R_r[self.recovered_time_period] = self.R_r[self.recovered_time_period]+self.R_r[self.recovered_time_period-1] - new_reexposed_r
         self.R_nr[self.recovered_time_period] += (self.R_nr[self.recovered_time_period-1] - new_reexposed_nr )
         self.R_r[self.recovered_time_period] += ( self.R_r[self.recovered_time_period-1] - new_reexposed_r )
         self.RE_nr[1] = new_reexposed_nr
