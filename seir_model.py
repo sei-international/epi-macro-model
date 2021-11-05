@@ -38,7 +38,13 @@ class SEIR_matrix:
         # Basic epidemiological parameters
         #-------------------------------------------------------------------
         self.start_time= get_datetime(seir_params['start date'])
-        self.R0 = seir_params['R0']
+        if 'Reinfection' in seir_params['R0']:
+            self.R0_1stinfection = seir_params['R0']['1st infection']
+            self.R0_reinfection = seir_params['R0']['Reinfection']
+        else:
+            self.R0_1stinfection = seir_params['R0']['1st infection']
+            self.R0_reinfection = seir_params['R0']['1st infection']
+
         self.k = seir_params['k factor']
         if 'population at risk fraction' in seir_params:
             self.population_at_risk_frac = seir_params['population at risk fraction']
@@ -154,7 +160,7 @@ class SEIR_matrix:
         self.ave_fraction_of_visible_reinfections_requiring_hospitalization = (1 - self.population_at_risk_frac) * self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
                                         self.population_at_risk_frac * self.fraction_of_visible_reinfections_requiring_hospitalization_r # will be updated as R_nr and R_r evolve
      
-        self.base_individual_exposure_rate = self.R0/self.mean_infectious_period
+        self.base_individual_exposure_rate = self.R0_1stinfection/self.mean_infectious_period
 
         # Assuming that populations of localities follow the normal rank-size rule with exponent -1, calculate ratio
         # of total population to population in the largest locality
@@ -254,7 +260,13 @@ class SEIR_matrix:
 
         """
 
-        return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0/self.k))
+        # Average R0 over reinfected and first-infected populations. k-factor is assumed to remain the same.
+        if (self.Itot+self.RItot)>0:
+            ave_R0 = (self.R0_1stinfection* self.Itot + self.R0_reinfection *self.RItot) / (self.Itot+self.RItot)
+        else:
+            ave_R0= self.R0_1stinfection
+   
+        return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0_1stinfection/self.k))
 
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float, order_of_infection: int) -> tuple:
         """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
