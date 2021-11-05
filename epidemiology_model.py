@@ -225,7 +225,6 @@ def epidemiology_model():
 
         # Loop of variants
         for v in range(0,nvars):
-
             # Loop over regions
             for j in range(0, nregions):
                 intl_infected_visitors = intl_visitors[j] * (epi[j][v].proportion_global_infected[i]*global_infection_rate[i]) * min(0, 1 - PHA_travel_restrictions)
@@ -268,28 +267,30 @@ def epidemiology_model():
                     comm_spread_frac_over_time[j,i,v] = epi[j][v].comm_spread_frac
                     mortality_rate_over_time[j,i,v] = epi[j][v].curr_mortality_rate
 
-        # Calculate hospitalisation index across variants
+        # Calculate hospitalisation index across variants and track infected fraction across variants
+        Itot_allvars=np_zeros(nregions) ## Breaks if one variant infects everyone
         hospitalized=np_zeros(nregions)
         for j in range(0, nregions):
             # Infected by regions
             for e in epi[j]:
+                Itot_allvars[j]+= e.Itot_incl_reinf # add total infected for each variant in that region
                 hosp_per_infective_1stinfections = (1 - e.invisible_fraction_1stinfection) * e.ave_fraction_of_visible_1stinfections_requiring_hospitalization
                 hosp_per_infective_reinfections  = (1 - e.invisible_fraction_reinfection) * e.ave_fraction_of_visible_reinfections_requiring_hospitalization
                 hospitalized[j] += ( hosp_per_infective_1stinfections * np_sum(e.I_r + e.I_nr) + hosp_per_infective_reinfections * np_sum(e.RI_r + e.RI_nr) )
             hospitalization_index_region[j] = bed_occupancy_factor + hospitalized[j] /baseline_hosp[j] 
 
-
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
-        # True up susceptible pools between variants
+        #True up susceptible pools and total population between variants
         for j in range(0, nregions):
-            for v in range(0,nvars):
-                if nvars>1:
-                    if i==0:
-                        epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]) + np_sum(epi[j][~v].Itot))
-                    if i > 0:
-                        epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]))
-                susceptible_over_time[j,i,v] = epi[j][v].S
+           for v in range(0,nvars):
+               if nvars>1:
+                   if i==0:
+                       epi[j][v].S-= (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1]) + np_sum(epi[j][~v].Itot))
+                   if i > 0:
+                       epi[j][v].S= max(0, epi[j][v].S- (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1])))
+                       epi[j][v].N -= ( epi[j][~v].new_deaths +epi[j][~v].new_deaths_reinf) 
+               susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
