@@ -84,7 +84,7 @@ class SEIR_matrix:
 
         
         
-        self.rec2inf2 = np_array(seir_params['matrix-params']['prob exposed given previous infection or inocculation'])
+        self.rec2inf2 = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
@@ -297,12 +297,12 @@ class SEIR_matrix:
         if order_of_infection==1:
             first_infection=True
             reinfection=False
-            if self.Itot == 0:
+            if self.Itot < self.eps:
                 return 0.0, 0.0
         if order_of_infection==2:
             first_infection=False
             reinfection=True
-            if self.RItot == 0:
+            if self.RItot < self.eps:
                 return 0.0, 0.0
 
         if infected_fraction == 0:
@@ -318,13 +318,16 @@ class SEIR_matrix:
         self.ave_fraction_of_visible_reinfections_requiring_hospitalization = np_sum(self.RI_nr)/(np_sum(self.RI_nr+self.RI_r)+self.eps)* self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
                         np_sum(self.RI_r)/(np_sum(self.RI_nr+self.RI_r)+self.eps) * self.fraction_of_visible_reinfections_requiring_hospitalization_r 
         current_fraction_of_all_visible_requiring_hospitalization = (self.ave_fraction_of_visible_1stinfections_requiring_hospitalization * self.Itot + \
-                    self.ave_fraction_of_visible_reinfections_requiring_hospitalization * self.RItot) / (self.Itot +self.RItot)
-        hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / current_fraction_of_all_visible_requiring_hospitalization
+                    self.ave_fraction_of_visible_reinfections_requiring_hospitalization * self.RItot) / (self.Itot +self.RItot) 
+
+        hospital_p_i_threshold = ((1 - bed_occupancy_fraction) * beds_per_1000 / 1000) / (current_fraction_of_all_visible_requiring_hospitalization)
 
         # Calculate mean exceedence fraction assuming a beta distribution
         mean_exceedance_per_infected_fraction = 1 - betainc(alpha + 1, beta, hospital_p_i_threshold) - \
-                    (hospital_p_i_threshold/infected_fraction+ self.eps) * (1 - betainc(alpha, beta, hospital_p_i_threshold))
-
+                    (hospital_p_i_threshold/infected_fraction) * (1 - betainc(alpha, beta, hospital_p_i_threshold))
+        if current_fraction_of_all_visible_requiring_hospitalization==0:
+            mean_exceedance_per_infected_fraction = 0 # CHECK THIS HACK WITH ERIC 
+        
         # Baseline fraction
         if first_infection==True:
             v = 1 - self.invisible_fraction_1stinfection
@@ -532,21 +535,21 @@ class SEIR_matrix:
         self.RItot_prev = self.RItot
         self.RItot = np_sum(self.RI_nr) + np_sum(self.RI_r)
         
-        new_reexposed_nr = self.rec2inf2[self.recovered_time_period-1]* self.R_nr[self.recovered_time_period] +  self.rec2inf2[self.recovered_time_period-2]* self.R_nr[self.recovered_time_period-1]
-        new_reexposed_r = self.rec2inf2[self.recovered_time_period-1]* self.R_r[self.recovered_time_period] +  self.rec2inf2[self.recovered_time_period-2]* self.R_r[self.recovered_time_period-1]
-        #new_reexposed_nr = soc_exp_rate_nr * self.rec2inf2[self.recovered_time_period-1] * self.R_nr[self.recovered_time_period] +  soc_exp_rate_nr * self.rec2inf2[self.recovered_time_period-2]* self.R_nr[self.recovered_time_period-1]
-        #new_reexposed_r  = soc_exp_rate_r * self.rec2inf2[self.recovered_time_period-1] * self.R_nr[self.recovered_time_period] +  soc_exp_rate_r * self.rec2inf2[self.recovered_time_period-2]* self.R_r[self.recovered_time_period-1]
-        
         #------------------------------------------------------------------------------------------------
         # 4: Shift recovered pool and calculated new reexposed
         #------------------------------------------------------------------------------------------------
+        soc_exp_rate_nr, soc_exp_rate_r = self.social_exposure_rate(infected_visitors, pub_health_factor, fraction_at_risk_isolated)
+        new_reexposed_nr = (1- self.rec2inf2[self.recovered_time_period-1]) * soc_exp_rate_nr * self.R_nr[self.recovered_time_period] +  \
+            (1-self.rec2inf2[self.recovered_time_period-2])* soc_exp_rate_nr * self.R_nr[self.recovered_time_period-1]
+        new_reexposed_r  = (1- self.rec2inf2[self.recovered_time_period-1]) * soc_exp_rate_r * self.R_nr[self.recovered_time_period] +  \
+            (1-self.rec2inf2[self.recovered_time_period-2]) * soc_exp_rate_r * self.R_r[self.recovered_time_period-1]
         self.R_nr[self.recovered_time_period] += (self.R_nr[self.recovered_time_period-1] - new_reexposed_nr )
         self.R_r[self.recovered_time_period] += ( self.R_r[self.recovered_time_period-1] - new_reexposed_r )
         self.RE_nr[1] = new_reexposed_nr
         self.RE_r[1] = new_reexposed_r
         for j in range(self.recovered_time_period-1, 1, -1):
-            new_reexposed_nr = self.rec2inf2[j-2]* self.R_nr[j-1]
-            new_reexposed_r  = self.rec2inf2[j-2]* self.R_r[j-1]
+            new_reexposed_nr = soc_exp_rate_r * (1-self.rec2inf2[j-2]) * self.R_nr[j-1] 
+            new_reexposed_r  = soc_exp_rate_r * (1-self.rec2inf2[j-2]) * self.R_r[j-1]
             self.R_nr[j] = self.R_nr[j-1] - new_reexposed_nr 
             self.R_r[j]  = self.R_r[j-1] - new_reexposed_r 
             self.RE_nr[1] += new_reexposed_nr
