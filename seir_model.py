@@ -221,8 +221,8 @@ class SEIR_matrix:
         self.RE_r  = np_zeros(self.reexposed_time_period+1)
 
         # Re -infected, either not at risk (nr) or at risk (r)
-        self.RI_nr = np_zeros(self.infective_time_period + 1)
-        self.RI_r = np_zeros(self.infective_time_period + 1)
+        self.RI_nr = np_zeros(self.reinfected_time_period + 1)
+        self.RI_r = np_zeros(self.reinfected_time_period+ 1)
 
         # Immune after 2nd infection
         self.Im = 0 
