@@ -32,8 +32,8 @@
       at risk: 0.0332
 
   fraction of observed reinfection cases requiring hospitalization:
-      average: 0.38
-      at risk: 0.60
+      average: 0.042
+      at risk: 0.120
 
   matrix-params:
       prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
@@ -102,8 +102,8 @@
       at risk: 0.0332
 
   fraction of observed reinfection cases requiring hospitalization:
-      average: 0.38
-      at risk: 0.60
+      average: 0.042
+      at risk: 0.120
 
   matrix-params:
       prob infected given exposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
