@@ -28,8 +28,8 @@
       at risk: 0.60
 
   case fatality rate among reinfections:
-      average: 0.057
-      at risk: 0.070
+      average: 0.0082
+      at risk: 0.0332
 
   fraction of observed reinfection cases requiring hospitalization:
       average: 0.38
@@ -98,8 +98,8 @@
       at risk: 0.2061
 
   case fatality rate among reinfections:
-      average: 0.057
-      at risk: 0.070
+      average: 0.0082
+      at risk: 0.0332
 
   fraction of observed reinfection cases requiring hospitalization:
       average: 0.38
