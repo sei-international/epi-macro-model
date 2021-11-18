@@ -15,7 +15,7 @@
   k factor: 0.1
   unobserved fraction of cases: 
         first infection: 0.87
-        reinfection: 0.95 # !! invented for now
+        reinfection: 0.473
   population at risk fraction: 0.05 # As a fraction of total population
   
   case fatality rate among 1st infections:
@@ -85,7 +85,7 @@
   k factor: 0.1
   unobserved fraction of cases: 
         first infection: 0.473
-        reinfection: 0.95 # !! invented for now
+        reinfection: 0.473
   population at risk fraction: 0.05 # As a fraction of total population
 
   case fatality rate among 1st infections:
