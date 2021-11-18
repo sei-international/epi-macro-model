@@ -42,7 +42,7 @@
                                              0.12,0.13,0.15,0.18,0.22,0.29,0.06,
                                              0.07,0.07,0.08,0.08,0.09,0.1,0.11]
       protective efficacy of previous infection or inocculation: [0.78,0.78,0.78]
-      prob reinfected given reexposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
+      prob reinfected given reexposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
       prob immunity or death given reinfected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
                                              0.08,0.08,0.09,0.08,0.09,0.1,0.11,
                                              0.12,0.13,0.15,0.18,0.22,0.29,0.06,
@@ -112,7 +112,7 @@
                                              0.200,0.250,0.250,0.333,0.333,0.500,0.500,
                                              0.500,0.500,0.500,0.500]
       protective efficacy of previous infection or inocculation: [0.78,0.78,0.78]
-      prob reinfected given reexposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
+      prob reinfected given reexposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
       prob immunity or death given reinfected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
                                              0.08,0.08,0.09,0.08,0.09,0.1,0.11,
                                              0.12,0.13,0.15,0.18,0.22,0.29,0.06,
