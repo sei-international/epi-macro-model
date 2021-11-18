@@ -11,7 +11,7 @@
 
   R0: 
     1st infection: 2.25
-    Reinfection: 2.25
+    Reinfection: 1.9
   k factor: 0.1
   unobserved fraction of cases: 
         first infection: 0.87
@@ -81,7 +81,7 @@
 
   R0:     
     1st infection: 6.4
-    Reinfection: 7
+    Reinfection: 1.9
   k factor: 0.1
   unobserved fraction of cases: 
         first infection: 0.473
