@@ -94,8 +94,8 @@
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
-      average: 0.38
-      at risk: 0.60
+      average: 0.0599
+      at risk: 0.2061
 
   case fatality rate among reinfections:
       average: 0.057
