@@ -84,7 +84,7 @@ class SEIR_matrix:
 
         
         
-        self.rec2inf2 = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
+        self.protective_efficacy = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
@@ -139,7 +139,7 @@ class SEIR_matrix:
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
         self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
-        self.recovered_time_period = len(self.rec2inf2)
+        self.recovered_time_period = len(self.protective_efficacy)
         self.reexposed_time_period = len(self.rexp2rinf)
         self.reinfected_time_period = len(rinf2imm_ave)
         # Mean infectious period is calculated based on the matrix model
@@ -265,7 +265,7 @@ class SEIR_matrix:
             ave_R0 = (self.R0_1stinfection* self.Itot + self.R0_reinfection *self.RItot) / (self.Itot+self.RItot)
         else:
             ave_R0= self.R0_1stinfection
-   
+
         return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0_1stinfection/self.k))
 
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float, order_of_infection: int) -> tuple:
@@ -315,8 +315,12 @@ class SEIR_matrix:
         beta = alpha_plus_beta - alpha
 
         # average fraction requiring hospitalisation among first infections and reinfections
-        self.ave_fraction_of_visible_reinfections_requiring_hospitalization = np_sum(self.RI_nr)/(np_sum(self.RI_nr+self.RI_r)+self.eps)* self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
-                        np_sum(self.RI_r)/(np_sum(self.RI_nr+self.RI_r)+self.eps) * self.fraction_of_visible_reinfections_requiring_hospitalization_r 
+        if np_sum(self.RI_nr+self.RI_r)>0:
+            self.ave_fraction_of_visible_reinfections_requiring_hospitalization = np_sum(self.RI_nr)/(np_sum(self.RI_nr+self.RI_r)+self.eps)* self.fraction_of_visible_reinfections_requiring_hospitalization_nr + \
+                np_sum(self.RI_r)/(np_sum(self.RI_nr+self.RI_r)+self.eps) * self.fraction_of_visible_reinfections_requiring_hospitalization_r 
+        else:
+            self.ave_fraction_of_visible_reinfections_requiring_hospitalization = self.fraction_of_visible_reinfections_requiring_hospitalization_nr 
+        
         current_fraction_of_all_visible_requiring_hospitalization = (self.ave_fraction_of_visible_1stinfections_requiring_hospitalization * self.Itot + \
                     self.ave_fraction_of_visible_reinfections_requiring_hospitalization * self.RItot) / (self.Itot +self.RItot) 
 
@@ -539,22 +543,21 @@ class SEIR_matrix:
         # 4: Shift recovered pool and calculated new reexposed
         #------------------------------------------------------------------------------------------------
         soc_exp_rate_nr, soc_exp_rate_r = self.social_exposure_rate(infected_visitors, pub_health_factor, fraction_at_risk_isolated)
-        new_reexposed_nr = (1- self.rec2inf2[self.recovered_time_period-1]) * soc_exp_rate_nr * self.R_nr[self.recovered_time_period] +  \
-            (1-self.rec2inf2[self.recovered_time_period-2])* soc_exp_rate_nr * self.R_nr[self.recovered_time_period-1]
-        new_reexposed_r  = (1- self.rec2inf2[self.recovered_time_period-1]) * soc_exp_rate_r * self.R_nr[self.recovered_time_period] +  \
-            (1-self.rec2inf2[self.recovered_time_period-2]) * soc_exp_rate_r * self.R_r[self.recovered_time_period-1]
+        new_reexposed_nr = (1- self.protective_efficacy[self.recovered_time_period-1]) * soc_exp_rate_nr * self.R_nr[self.recovered_time_period] +  \
+            (1-self.protective_efficacy[self.recovered_time_period-2])* soc_exp_rate_nr * self.R_nr[self.recovered_time_period-1]
+        new_reexposed_r  = (1- self.protective_efficacy[self.recovered_time_period-1]) * soc_exp_rate_r * self.R_r[self.recovered_time_period] +  \
+            (1-self.protective_efficacy[self.recovered_time_period-2]) * soc_exp_rate_r * self.R_r[self.recovered_time_period-1]
         self.R_nr[self.recovered_time_period] += (self.R_nr[self.recovered_time_period-1] - new_reexposed_nr )
         self.R_r[self.recovered_time_period] += ( self.R_r[self.recovered_time_period-1] - new_reexposed_r )
         self.RE_nr[1] = new_reexposed_nr
         self.RE_r[1] = new_reexposed_r
         for j in range(self.recovered_time_period-1, 1, -1):
-            new_reexposed_nr = soc_exp_rate_r * (1-self.rec2inf2[j-2]) * self.R_nr[j-1] 
-            new_reexposed_r  = soc_exp_rate_r * (1-self.rec2inf2[j-2]) * self.R_r[j-1]
+            new_reexposed_nr = soc_exp_rate_nr * (1-self.protective_efficacy[j-2]) * self.R_nr[j-1] 
+            new_reexposed_r  = soc_exp_rate_r * (1-self.protective_efficacy[j-2]) * self.R_r[j-1]
             self.R_nr[j] = self.R_nr[j-1] - new_reexposed_nr 
             self.R_r[j]  = self.R_r[j-1] - new_reexposed_r 
-            self.RE_nr[1] += new_reexposed_nr
-            self.RE_r[1]  += new_reexposed_r
-        
+            self.RE_nr[1] = self.RE_nr[1]+ new_reexposed_nr
+            self.RE_r[1]  = self.RE_r[1] + new_reexposed_r
         #------------------------------------------------------------------------------------------------
         # 5: Calculate new recovered or deceased and shift infected pool
         #------------------------------------------------------------------------------------------------
@@ -596,7 +599,6 @@ class SEIR_matrix:
         # Do this update after accounting for newly exposed
         vaccinated_nr,  vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= (vaccinated_nr + vaccinated_r)
-
         #------------------------------------------------------------------------------------------------
         # 8: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
