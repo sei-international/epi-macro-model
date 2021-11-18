@@ -80,7 +80,7 @@
   start date: {year: 2020, month: 12, day: 31}
 
   R0:     
-    1st infection: 7
+    1st infection: 6.4
     Reinfection: 7
   k factor: 0.1
   unobserved fraction of cases: 
