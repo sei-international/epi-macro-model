@@ -157,6 +157,7 @@ def epidemiology_model():
     new_deaths_over_time = np_zeros((nregions, ntimesteps, nvars))
     deaths_reinf_over_time = np_zeros((nregions, ntimesteps, nvars))
     recovered_over_time = np_zeros((nregions, ntimesteps, nvars))
+    vaccinated_over_time = np_zeros((nregions, ntimesteps, nvars))
     immune_over_time = np_zeros((nregions, ntimesteps, nvars))
     mortality_rate_over_time = np_zeros((nregions, ntimesteps, nvars))
 
@@ -261,6 +262,7 @@ def epidemiology_model():
                     deaths_over_time[j,i,v] = deaths[j,v]
                     deaths_reinf_over_time[j,i,v] = deaths_reinf[j,v]
                     recovered_over_time[j,i,v] = np_sum(epi[j][v].R_nr) + np_sum(epi[j][v].R_r)
+                    vaccinated_over_time[j,i,v] = epi[j][v].vaccinated
                     immune_over_time[j,i,v] = epi[j][v].Im
                     cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction_1stinfection) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1]) + \
                         (1 - epi[j][v].invisible_fraction_reinfection) * (epi[j][v].RI_nr[1] + epi[j][v].RI_r[1])
@@ -293,5 +295,5 @@ def epidemiology_model():
                susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
-       exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
+       exposed_over_time, infective_over_time, recovered_over_time, vaccinated_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
        immune_over_time, hospitalization_index, epi

@@ -216,6 +216,8 @@ class SEIR_matrix:
         self.R_r = np_zeros(self.recovered_time_period+1)
         self.recovered_pool = 0
 
+        # Vaccinated
+        self.vaccinated=0
         # Re-exposed, either not at risk (nr) or at risk (r)
         self.RE_nr = np_zeros(self.reexposed_time_period+1)
         self.RE_r  = np_zeros(self.reexposed_time_period+1)
@@ -599,6 +601,7 @@ class SEIR_matrix:
         # Do this update after accounting for newly exposed
         vaccinated_nr,  vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= (vaccinated_nr + vaccinated_r)
+        self.vaccinated=vaccinated_nr+vaccinated_r
         #------------------------------------------------------------------------------------------------
         # 8: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
@@ -615,13 +618,8 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         self.R_nr[1] = self.recovered_pool_nr
         self.R_r[1] = self.recovered_pool_r
-        if nvariants>1:
-            if self.variant=="Delta variant":
-                self.R_nr[1] += vaccinated_nr
-                self.R_r[1] += vaccinated_r
-        else:
-            self.R_nr[1] += vaccinated_nr
-            self.R_r[1] += vaccinated_r
+        self.R_nr[1] += vaccinated_nr
+        self.R_r[1] += vaccinated_r
 
         # Update N
         self.N_prev = self.N
