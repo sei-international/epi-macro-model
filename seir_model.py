@@ -81,10 +81,7 @@ class SEIR_matrix:
 
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
         self.rexp2rinf = np_array(seir_params['matrix-params']['prob reinfected given reexposed'])
-
         
-        
-        self.protective_efficacy = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
@@ -139,7 +136,6 @@ class SEIR_matrix:
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
         self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
-        self.recovered_time_period = len(self.protective_efficacy)
         self.reexposed_time_period = len(self.rexp2rinf)
         self.reinfected_time_period = len(rinf2imm_ave)
         # Mean infectious period is calculated based on the matrix model
@@ -180,6 +176,20 @@ class SEIR_matrix:
             proportion_global_infected_val[i] = proportion_global_infected_points[i][1]
         self.proportion_global_infected =  np_interp(proportion_global_infected_traj_timesteps_array, proportion_global_infected_ts, proportion_global_infected_val)
 
+        # protective efficacy of vaccine or previous infection since month being fully vaccinated
+        ndays_month=30.42
+        protective_efficacy_points = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
+        protective_efficacy_npoints = len(protective_efficacy_points)
+        #protective_efficacy_traj_start = protective_efficacy_points[0][0]['month']*ndays_month
+        protective_efficacy_traj_end = protective_efficacy_points[protective_efficacy_npoints-1][0]['month']
+        protective_efficacy_traj_timesteps_array = np_array(range(0,round(protective_efficacy_points[len(protective_efficacy_points)-1][0]['month']*ndays_month)))
+        protective_efficacy_ts = np_empty(protective_efficacy_npoints)
+        protective_efficacy_val = np_empty(protective_efficacy_npoints)
+        for i in range(0, protective_efficacy_npoints):
+            protective_efficacy_ts[i]  = round(protective_efficacy_points[i][0]['month']*ndays_month)
+            protective_efficacy_val[i] = protective_efficacy_points[i][1]
+        self.protective_efficacy = np_interp(protective_efficacy_traj_timesteps_array, protective_efficacy_ts, protective_efficacy_val)
+        self.recovered_time_period = len(self.protective_efficacy)
         #-------------------------------------------------------------------
         # State variables
         #-------------------------------------------------------------------
@@ -211,11 +221,17 @@ class SEIR_matrix:
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
         self.I_r[1] = self.population_at_risk_frac * initial_infected
 
-        # Recovered: Assume none at initial time step
+        # Recovered and re-exposed: Assume none at initial time step
         self.R_nr = np_zeros(self.recovered_time_period+1)
         self.R_r = np_zeros(self.recovered_time_period+1)
+        self.new_reexposed_nr = np_zeros(self.recovered_time_period+1)
+        self.new_reexposed_r = np_zeros(self.recovered_time_period+1)
         self.recovered_pool = 0
+        self.recovered_pool_nr = 0
+        self.recovered_pool_r = 0
 
+        # Vaccinated
+        self.vaccinated=0
         # Re-exposed, either not at risk (nr) or at risk (r)
         self.RE_nr = np_zeros(self.reexposed_time_period+1)
         self.RE_r  = np_zeros(self.reexposed_time_period+1)
@@ -551,13 +567,15 @@ class SEIR_matrix:
         self.R_r[self.recovered_time_period] += ( self.R_r[self.recovered_time_period-1] - new_reexposed_r )
         self.RE_nr[1] = new_reexposed_nr
         self.RE_r[1] = new_reexposed_r
+        self.new_reexposed_nr[self.recovered_time_period] = new_reexposed_nr
+        self.new_reexposed_r[self.recovered_time_period] = new_reexposed_r
         for j in range(self.recovered_time_period-1, 1, -1):
-            new_reexposed_nr = soc_exp_rate_nr * (1-self.protective_efficacy[j-2]) * self.R_nr[j-1] 
-            new_reexposed_r  = soc_exp_rate_r * (1-self.protective_efficacy[j-2]) * self.R_r[j-1]
-            self.R_nr[j] = self.R_nr[j-1] - new_reexposed_nr 
-            self.R_r[j]  = self.R_r[j-1] - new_reexposed_r 
-            self.RE_nr[1] = self.RE_nr[1]+ new_reexposed_nr
-            self.RE_r[1]  = self.RE_r[1] + new_reexposed_r
+            self.new_reexposed_nr[j] = soc_exp_rate_nr * (1-self.protective_efficacy[j-2]) * self.R_nr[j-1] 
+            self.new_reexposed_r[j] = soc_exp_rate_r * (1-self.protective_efficacy[j-2]) * self.R_r[j-1]
+            self.R_nr[j] = self.R_nr[j-1] - self.new_reexposed_nr[j] 
+            self.R_r[j]  = self.R_r[j-1] - self.new_reexposed_r[j]
+            self.RE_nr[1] = self.RE_nr[1]+ self.new_reexposed_nr[j] 
+            self.RE_r[1]  = self.RE_r[1] + self.new_reexposed_r[j]
         #------------------------------------------------------------------------------------------------
         # 5: Calculate new recovered or deceased and shift infected pool
         #------------------------------------------------------------------------------------------------
@@ -599,6 +617,7 @@ class SEIR_matrix:
         # Do this update after accounting for newly exposed
         vaccinated_nr,  vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
         self.S -= (vaccinated_nr + vaccinated_r)
+        self.vaccinated=vaccinated_nr+vaccinated_r
         #------------------------------------------------------------------------------------------------
         # 8: Separate recovered and deceased into recovered/deceased pools and update total population
         #------------------------------------------------------------------------------------------------
@@ -615,13 +634,8 @@ class SEIR_matrix:
         #------------------------------------------------------------------------------------------------
         self.R_nr[1] = self.recovered_pool_nr
         self.R_r[1] = self.recovered_pool_r
-        if nvariants>1:
-            if self.variant=="Delta variant":
-                self.R_nr[1] += vaccinated_nr
-                self.R_r[1] += vaccinated_r
-        else:
-            self.R_nr[1] += vaccinated_nr
-            self.R_r[1] += vaccinated_r
+        self.R_nr[1] += vaccinated_nr
+        self.R_r[1] += vaccinated_r
 
         # Update N
         self.N_prev = self.N

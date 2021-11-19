@@ -1,5 +1,5 @@
 from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, \
-    amax as np_amax, interp as np_interp, ones as np_ones, tile as np_tile
+    amax as np_amax, interp as np_interp, ones as np_ones, tile as np_tile, isnan as np_isnan
 import yaml
 from seir_model import SEIR_matrix
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array, timesteps_over_timedelta_weeks
@@ -157,6 +157,7 @@ def epidemiology_model():
     new_deaths_over_time = np_zeros((nregions, ntimesteps, nvars))
     deaths_reinf_over_time = np_zeros((nregions, ntimesteps, nvars))
     recovered_over_time = np_zeros((nregions, ntimesteps, nvars))
+    vaccinated_over_time = np_zeros((nregions, ntimesteps, nvars))
     immune_over_time = np_zeros((nregions, ntimesteps, nvars))
     mortality_rate_over_time = np_zeros((nregions, ntimesteps, nvars))
 
@@ -261,6 +262,7 @@ def epidemiology_model():
                     deaths_over_time[j,i,v] = deaths[j,v]
                     deaths_reinf_over_time[j,i,v] = deaths_reinf[j,v]
                     recovered_over_time[j,i,v] = np_sum(epi[j][v].R_nr) + np_sum(epi[j][v].R_r)
+                    vaccinated_over_time[j,i,v] = epi[j][v].vaccinated
                     immune_over_time[j,i,v] = epi[j][v].Im
                     cumulative_cases[j,v] += (1 - epi[j][v].invisible_fraction_1stinfection) * (epi[j][v].I_nr[1] + epi[j][v].I_r[1]) + \
                         (1 - epi[j][v].invisible_fraction_reinfection) * (epi[j][v].RI_nr[1] + epi[j][v].RI_r[1])
@@ -281,7 +283,7 @@ def epidemiology_model():
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
-        #True up susceptible pools and total population between variants
+        #True up susceptible pools, total population and recovered pools between variants
         for j in range(0, nregions):
            for v in range(0,nvars):
                if nvars>1:
@@ -290,8 +292,20 @@ def epidemiology_model():
                    if i > 0:
                        epi[j][v].S= max(0, epi[j][v].S- (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1])))
                        epi[j][v].N -= ( epi[j][~v].new_deaths +epi[j][~v].new_deaths_reinf) 
+
+                   if epi_datetime_array[i] < epi[j][v].start_time:
+                       epi[j][v].R_nr[epi[j][v].recovered_time_period] += (epi[j][v].R_nr[epi[j][v].recovered_time_period-1])
+                       epi[j][v].R_r[epi[j][v].recovered_time_period] += (epi[j][v].R_r[epi[j][v].recovered_time_period-1])
+                       for d in range(epi[j][v].recovered_time_period-1, 1, -1):
+                           epi[j][v].R_nr[d] = epi[j][v].R_nr[d-1]
+                           epi[j][v].R_r[d]  = epi[j][v].R_r[d-1]
+                   epi[j][v].R_nr[1]  = epi[j][v].recovered_pool_nr + epi[j][~v].recovered_pool_nr
+                   epi[j][v].R_r[1] = epi[j][v].recovered_pool_r + epi[j][~v].recovered_pool_r
+                   epi[j][v].R_nr -= epi[j][~v].new_reexposed_nr
+                   epi[j][v].R_r -= epi[j][~v].new_reexposed_r 
+                           
                susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
-       exposed_over_time, infective_over_time, recovered_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
+       exposed_over_time, infective_over_time, recovered_over_time, vaccinated_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
        immune_over_time, hospitalization_index, epi
