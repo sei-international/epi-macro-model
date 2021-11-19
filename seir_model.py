@@ -81,10 +81,7 @@ class SEIR_matrix:
 
         self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
         self.rexp2rinf = np_array(seir_params['matrix-params']['prob reinfected given reexposed'])
-
         
-        
-        self.protective_efficacy = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
         inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
             rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
@@ -139,7 +136,6 @@ class SEIR_matrix:
         # Maximum infective and exposed time periods are simply the length of the coefficient arrays
         self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
-        self.recovered_time_period = len(self.protective_efficacy)
         self.reexposed_time_period = len(self.rexp2rinf)
         self.reinfected_time_period = len(rinf2imm_ave)
         # Mean infectious period is calculated based on the matrix model
@@ -180,6 +176,20 @@ class SEIR_matrix:
             proportion_global_infected_val[i] = proportion_global_infected_points[i][1]
         self.proportion_global_infected =  np_interp(proportion_global_infected_traj_timesteps_array, proportion_global_infected_ts, proportion_global_infected_val)
 
+        # protective efficacy of vaccine or previous infection since month being fully vaccinated
+        ndays_month=30.42
+        protective_efficacy_points = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
+        protective_efficacy_npoints = len(protective_efficacy_points)
+        #protective_efficacy_traj_start = protective_efficacy_points[0][0]['month']*ndays_month
+        protective_efficacy_traj_end = protective_efficacy_points[protective_efficacy_npoints-1][0]['month']
+        protective_efficacy_traj_timesteps_array = np_array(range(0,round(protective_efficacy_points[len(protective_efficacy_points)-1][0]['month']*ndays_month)))
+        protective_efficacy_ts = np_empty(protective_efficacy_npoints)
+        protective_efficacy_val = np_empty(protective_efficacy_npoints)
+        for i in range(0, protective_efficacy_npoints):
+            protective_efficacy_ts[i]  = round(protective_efficacy_points[i][0]['month']*ndays_month)
+            protective_efficacy_val[i] = protective_efficacy_points[i][1]
+        self.protective_efficacy = np_interp(protective_efficacy_traj_timesteps_array, protective_efficacy_ts, protective_efficacy_val)
+        self.recovered_time_period = len(self.protective_efficacy)
         #-------------------------------------------------------------------
         # State variables
         #-------------------------------------------------------------------

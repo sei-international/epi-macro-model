@@ -24,7 +24,7 @@ bed occupancy:
 #
 ###############################################################
 
-global infection rate: # per 1000
+global infection rate: # per 1000 across variants
     - [{year: 2020, month: 1, day: 1}, 0.0000]
     - [{year: 2020, month: 3, day: 20}, 0.0308]
     - [{year: 2020, month: 4, day: 7}, 0.1539]
