@@ -43,7 +43,7 @@
                                              0.07,0.07,0.08,0.08,0.09,0.1,0.11]
       protective efficacy of previous infection or inocculation: # points of interpolation given by month since infection/inocculation
                                                         - [{month: 0}, 0.9] 
-                                                        - [{month: 1}, 0.9] 
+                                                        - [{month: 4}, 0.9] # have to have same max timepoint in both variants
       prob reinfected given reexposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
       prob immunity or death given reinfected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
                                              0.08,0.08,0.09,0.08,0.09,0.1,0.11,

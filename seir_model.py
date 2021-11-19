@@ -221,10 +221,14 @@ class SEIR_matrix:
         self.I_nr[1] = (1 - self.population_at_risk_frac) * initial_infected
         self.I_r[1] = self.population_at_risk_frac * initial_infected
 
-        # Recovered: Assume none at initial time step
+        # Recovered and re-exposed: Assume none at initial time step
         self.R_nr = np_zeros(self.recovered_time_period+1)
         self.R_r = np_zeros(self.recovered_time_period+1)
+        self.new_reexposed_nr = np_zeros(self.recovered_time_period+1)
+        self.new_reexposed_r = np_zeros(self.recovered_time_period+1)
         self.recovered_pool = 0
+        self.recovered_pool_nr = 0
+        self.recovered_pool_r = 0
 
         # Vaccinated
         self.vaccinated=0
@@ -563,13 +567,15 @@ class SEIR_matrix:
         self.R_r[self.recovered_time_period] += ( self.R_r[self.recovered_time_period-1] - new_reexposed_r )
         self.RE_nr[1] = new_reexposed_nr
         self.RE_r[1] = new_reexposed_r
+        self.new_reexposed_nr[self.recovered_time_period] = new_reexposed_nr
+        self.new_reexposed_r[self.recovered_time_period] = new_reexposed_r
         for j in range(self.recovered_time_period-1, 1, -1):
-            new_reexposed_nr = soc_exp_rate_nr * (1-self.protective_efficacy[j-2]) * self.R_nr[j-1] 
-            new_reexposed_r  = soc_exp_rate_r * (1-self.protective_efficacy[j-2]) * self.R_r[j-1]
-            self.R_nr[j] = self.R_nr[j-1] - new_reexposed_nr 
-            self.R_r[j]  = self.R_r[j-1] - new_reexposed_r 
-            self.RE_nr[1] = self.RE_nr[1]+ new_reexposed_nr
-            self.RE_r[1]  = self.RE_r[1] + new_reexposed_r
+            self.new_reexposed_nr[j] = soc_exp_rate_nr * (1-self.protective_efficacy[j-2]) * self.R_nr[j-1] 
+            self.new_reexposed_r[j] = soc_exp_rate_r * (1-self.protective_efficacy[j-2]) * self.R_r[j-1]
+            self.R_nr[j] = self.R_nr[j-1] - self.new_reexposed_nr[j] 
+            self.R_r[j]  = self.R_r[j-1] - self.new_reexposed_r[j]
+            self.RE_nr[1] = self.RE_nr[1]+ self.new_reexposed_nr[j] 
+            self.RE_r[1]  = self.RE_r[1] + self.new_reexposed_r[j]
         #------------------------------------------------------------------------------------------------
         # 5: Calculate new recovered or deceased and shift infected pool
         #------------------------------------------------------------------------------------------------

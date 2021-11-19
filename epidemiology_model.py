@@ -1,5 +1,5 @@
 from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, \
-    amax as np_amax, interp as np_interp, ones as np_ones, tile as np_tile
+    amax as np_amax, interp as np_interp, ones as np_ones, tile as np_tile, isnan as np_isnan
 import yaml
 from seir_model import SEIR_matrix
 from common import Window, get_datetime, timesteps_between_dates, get_datetime_array, timesteps_over_timedelta_weeks
@@ -283,7 +283,7 @@ def epidemiology_model():
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
 
-        #True up susceptible pools and total population between variants
+        #True up susceptible pools, total population and recovered pools between variants
         for j in range(0, nregions):
            for v in range(0,nvars):
                if nvars>1:
@@ -292,6 +292,18 @@ def epidemiology_model():
                    if i > 0:
                        epi[j][v].S= max(0, epi[j][v].S- (np_sum(epi[j][~v].E_nr[1]) + np_sum(epi[j][~v].E_r[1])))
                        epi[j][v].N -= ( epi[j][~v].new_deaths +epi[j][~v].new_deaths_reinf) 
+
+                   if epi_datetime_array[i] < epi[j][v].start_time:
+                       epi[j][v].R_nr[epi[j][v].recovered_time_period] += (epi[j][v].R_nr[epi[j][v].recovered_time_period-1])
+                       epi[j][v].R_r[epi[j][v].recovered_time_period] += (epi[j][v].R_r[epi[j][v].recovered_time_period-1])
+                       for d in range(epi[j][v].recovered_time_period-1, 1, -1):
+                           epi[j][v].R_nr[d] = epi[j][v].R_nr[d-1]
+                           epi[j][v].R_r[d]  = epi[j][v].R_r[d-1]
+                   epi[j][v].R_nr[1]  = epi[j][v].recovered_pool_nr + epi[j][~v].recovered_pool_nr
+                   epi[j][v].R_r[1] = epi[j][v].recovered_pool_r + epi[j][~v].recovered_pool_r
+                   epi[j][v].R_nr -= epi[j][~v].new_reexposed_nr
+                   epi[j][v].R_r -= epi[j][~v].new_reexposed_r 
+                           
                susceptible_over_time[j,i,v] = epi[j][v].S
 
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
