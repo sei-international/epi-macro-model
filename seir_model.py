@@ -281,7 +281,7 @@ class SEIR_matrix:
         else:
             ave_R0= self.R0_1stinfection
 
-        return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * self.R0_1stinfection/self.k))
+        return 1 - betainc(self.k * (num_inf + self.eps), num_inf + 1, 1/(1 + pub_health_factor * ave_R0/self.k))
 
     def mortality_rate(self, infected_fraction: float, bed_occupancy_fraction: float, beds_per_1000: float, order_of_infection: int) -> tuple:
         """ Calculates the mortality rate, taking into account bed overflow and inhomogeneity in the infected population
