@@ -4,23 +4,23 @@
 #
 ###############################################################
 - name: Ports of entry
-  number of localities: 72 #  Total districts in provinces containing ports of entry
+  number of localities: 34 # 3006 counties, 50 states
   initial:
-    population: 16.5e+06
-    beds per 1000: 0.9
-    population with community spread: 0.15 # As fraction of population
+    population: 711000
+    beds per 1000: 2.4
+    population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
-  between locality mobility rate: 0.01
+  between locality mobility rate: 0.05 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
   between region mobility rate: 0.001
   international travel:
-      daily arrivals: 6000
+      daily arrivals: 217000 # Annual (79.1 million) divided by 365
       duration of stay: 7 # Assume 1 week/visitor
 - name: Other provinces
-  number of localities: 200 # The remaining districts
+  number of localities: 401 # 3006 counties, 50 states
   initial:
-    population: 12.9e+06
-    beds per 1000: 0.9 # Assume same in both regions
+    population: 711000
+    beds per 1000: 2.4 # Assume same in both regions
     population with community spread: 0 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
-  between locality mobility rate: 0.0001
+  between locality mobility rate: 0.0001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
   between region mobility rate: 0.0001
