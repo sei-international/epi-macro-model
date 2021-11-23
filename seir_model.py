@@ -1,4 +1,5 @@
 from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, interp as np_interp, isnan as np_isnan
+from scipy.special import betainc as betainc
 import yaml
 from common import get_datetime, timesteps_between_dates
 
