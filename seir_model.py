@@ -1,5 +1,4 @@
 from numpy import array as np_array, zeros as np_zeros, sum as np_sum, empty as np_empty, interp as np_interp, isnan as np_isnan
-from scipy.special import betainc as betainc
 import yaml
 from common import get_datetime, timesteps_between_dates
 
@@ -584,8 +583,8 @@ class SEIR_matrix:
         for j in range(self.infective_time_period,1,-1):
             recovered_or_deceased_nr = recovered_or_deceased_nr + self.inf2rd_nr[j-1]*self.I_nr[j-1]
             recovered_or_deceased_r = recovered_or_deceased_r + self.inf2rd_r[j-1]*self.I_r[j-1]
-            self.I_nr[j] = max((1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1], 0)
-            self.I_r[j] = max((1 - self.inf2rd_r[j-1]) * self.I_r[j-1], 0)
+            self.I_nr[j] = (1 - self.inf2rd_nr[j-1]) * self.I_nr[j-1]
+            self.I_r[j] = (1 - self.inf2rd_r[j-1]) * self.I_r[j-1]
         self.I_nr[1] = self.E_nr[self.exposed_time_period]
         self.I_r[1] = self.E_r[self.exposed_time_period]
 
