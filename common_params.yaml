@@ -58,7 +58,7 @@ global-GDP-trajectory: # Growth on an annualized basis
 
 isolate symptomatic cases:
     -   apply: true
-        fraction of cases isolated: 0.5
+        fraction of cases isolated: 0.6
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31
         end date: {year: 2021, month: 10, day: 31}
@@ -76,7 +76,7 @@ test and trace: # until testing capabilities are ramped up
     -   apply: true
         fraction of infectious cases isolated: 0.3
         start date: {year: 2020, month: 3, day: 17}
-        ramp up for: 120 # 4 month
+        ramp up for: 90 # 4 month
         end date: {year: 2021, month: 5, day: 30}
         ramp down for: 31
 
@@ -88,9 +88,9 @@ social distance:
         ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
         ramp down for: 90 # days
-    # Assume ramp up again after August 2020 until April 
+    # Assume ramp up again after August 2020 until April         
     -   apply: true
-        effectiveness: 0.5
+        effectiveness: 0.6
         start date: {year: 2020, month: 8, day: 5}
         ramp up for: 120 # days
         end date: {year: 2021, month: 4, day: 30}
