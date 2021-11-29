@@ -163,6 +163,7 @@ def epidemiology_model():
 
     hospitalization_index_region = np_ones(nregions)
     hospitalization_index = np_ones(ntimesteps)
+    mortality_rate = np_ones(ntimesteps)
 
     infective_over_time = np_zeros((nregions, ntimesteps, nvars))
     reinfective_over_time = np_zeros((nregions, ntimesteps, nvars))
@@ -251,7 +252,7 @@ def epidemiology_model():
                                   nvars)
 
                     # Update values for indicator graphs
-                    new_deaths_over_time[j,i,v] = epi[j][v].new_deaths
+                    new_deaths_over_time[j,i,v] = epi[j][v].new_deaths + epi[j][v].new_deaths_reinf
                     deaths[j,v] += epi[j][v].new_deaths
                     deaths_reinf[j,v] += epi[j][v].new_deaths_reinf
                     #susceptible_over_time[j,i,v] = epi[j][v].S
@@ -282,6 +283,8 @@ def epidemiology_model():
             hospitalization_index_region[j] = bed_occupancy_factor + hospitalized[j] /baseline_hosp[j] 
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
+        mortality_rate[i] = np_sum(new_deaths_over_time[:,i,:] )/3092
+        print(mortality_rate[i])
 
         #True up susceptible pools, total population and recovered pools between variants
         for j in range(0, nregions):
@@ -305,7 +308,7 @@ def epidemiology_model():
                    epi[j][v].R_r -= epi[j][~v].new_reexposed_r 
                            
                susceptible_over_time[j,i,v] = epi[j][v].S
-
+   
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, vaccinated_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
-       immune_over_time, hospitalization_index, epi
+       immune_over_time, hospitalization_index, mortality_rate

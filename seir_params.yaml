@@ -7,7 +7,7 @@
 ###############################################################
 - name: Baseline variant
 
-  start date: {year: 2020, month: 3, day: 12}
+  start date: {year: 2020, month: 3, day: 2}
 
   R0: 
     1st infection: 2.25
@@ -21,6 +21,7 @@
   case fatality rate among 1st infections:
       average: 0.011
       at risk: 0.073
+
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
@@ -56,8 +57,8 @@
 
   initial:
     infected fraction:
-      Ports of entry: 0.001 # As a fraction of total population
-      Other provinces: 0 
+      Ports of entry: 20 # As a fraction of total population per 1000 (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
+      Other provinces: 1 
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 1]
@@ -78,7 +79,7 @@
 
 - name: Delta variant
 
-  start date: {year: 2020, month: 12, day: 31}
+  start date: {year: 2021, month: 1, day: 23}
 
   R0:     
     1st infection: 6.4
@@ -108,9 +109,9 @@
 
   matrix-params:
       prob infected given exposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
-prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
-                                      0.05,0.05,0.05,0.20,0.20,0.20,0.20,0.20,
-                                      0.13,0.13,0.13,0.13,0.13]
+      prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
+                                                0.05,0.05,0.05,0.20,0.20,0.20,0.20,0.20,
+                                                0.13,0.13,0.13,0.13,0.13]
       protective efficacy of previous infection or inocculation: # points of interpolation given by month since infection/inocculation
                                                     - [{month: 0}, 0.93]
                                                     - [{month: 4}, 0.53]
@@ -127,7 +128,7 @@ prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
   initial: # at variant's start date
     infected fraction:
       Ports of entry: 0.001 # As a fraction of total population
-      Other provinces: 0 # Per 1000 population
+      Other provinces: 0.0  # Per 1000 population
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
