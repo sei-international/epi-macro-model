@@ -14,13 +14,13 @@
     Reinfection: 1.9
   k factor: 0.1
   unobserved fraction of cases: 
-        first infection: 0.87
+        first infection: 0.47
         reinfection: 0.47
   population at risk fraction: 0.05 # As a fraction of total population
   
   case fatality rate among 1st infections:
-      average: 0.057
-      at risk: 0.070
+      average: 0.011
+      at risk: 0.073
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
