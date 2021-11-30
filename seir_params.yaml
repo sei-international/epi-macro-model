@@ -79,7 +79,7 @@
 
 - name: Delta variant
 
-  start date: {year: 2021, month: 1, day: 23}
+  start date: {year: 2021, month: 4, day: 30}
 
   R0:     
     1st infection: 6.4
@@ -127,8 +127,8 @@
 
   initial: # at variant's start date
     infected fraction:
-      Ports of entry: 0.001 # As a fraction of total population
-      Other provinces: 0.0  # Per 1000 population
+      Ports of entry: 1 # As a fraction of total population per 1000
+      Other provinces: 0 
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
