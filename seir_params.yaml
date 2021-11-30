@@ -127,8 +127,8 @@
 
   initial: # at variant's start date
     infected fraction:
-      Ports of entry: 1 # As a fraction of total population per 1000
-      Other provinces: 0 
+      Ports of entry: 0.9 # As a fraction of total population per 1000
+      Other provinces: 0.5
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
