@@ -57,7 +57,7 @@
 
   initial:
     infected fraction:
-      Ports of entry: 20 # As a fraction of total population per 1000 (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
+      Ports of entry: 30 # As a fraction of total population per 1000 (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
       Other provinces: 1 
 
   proportion of global infection rate:
@@ -128,7 +128,7 @@
   initial: # at variant's start date
     infected fraction:
       Ports of entry: 0.9 # As a fraction of total population per 1000
-      Other provinces: 0.5
+      Other provinces: 0.1
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
