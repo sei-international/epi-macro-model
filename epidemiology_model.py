@@ -57,6 +57,9 @@ def epidemiology_model():
 
     # All the epidemiological regional models will give the same values for these parameters
     epi_invisible_fraction = epi[0][0].invisible_fraction_1stinfection
+    total_population=0
+    for i in range(0,len(epi[:][0])): 
+        total_population += epi[i][0].N
 
     normal_bed_occupancy_fraction = common_params['bed occupancy']['normal']
     max_reduction_in_normal_bed_occupancy = common_params['bed occupancy']['max reduction']
@@ -239,7 +242,8 @@ def epidemiology_model():
                                 dom_infected_visitors += epi[k][v].Itot_prev * between_region_mobility_rate[k]/(nregions - 1)
 
                     # Run the model for one time step
-                    epi[j][v].update(dom_infected_visitors + intl_infected_visitors,
+                    epi[j][v].update(total_population,
+                                  dom_infected_visitors + intl_infected_visitors,
                                   between_locality_mobility_rate[j],
                                   public_health_adjustment,
                                   PHA_isolate_at_risk,
@@ -282,7 +286,7 @@ def epidemiology_model():
             hospitalization_index_region[j] = bed_occupancy_factor + hospitalized[j] /baseline_hosp[j] 
 
         hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
-        mortality_rate[i] = np_sum(new_deaths_over_time[:,i,:] )/309200000/100000
+        mortality_rate[i] = np_sum(new_deaths_over_time[:,i,:] )/309200000* 100000 # per 100,000
 
         #True up susceptible pools, total population and recovered pools between variants
         for j in range(0, nregions):
