@@ -422,7 +422,7 @@ class SEIR_matrix:
 
         return pub_health_factor * base_rate, pub_health_factor_r * base_rate
 
-    def vaccinations(self, max_vaccine_doses: float, vaccinate_at_risk_first: bool) -> float:
+    def vaccinations(self, max_vaccine_doses: float, vaccinate_at_risk_first: bool, total_population: float) -> float:
         """
 
 
@@ -432,6 +432,8 @@ class SEIR_matrix:
             Number of doses available
         vaccinate_at_risk_first: bool
             Is at risk population vaccinated first?
+        total_population: float
+            population across regions
 
         Returns
         -------
@@ -443,7 +445,7 @@ class SEIR_matrix:
 
         """
 
-        vaccinations = min(self.S, max_vaccine_doses)
+        vaccinations = min(self.S, self.N/total_population*max_vaccine_doses)
 
         if vaccinate_at_risk_first:
             vaccinations_nr = 0
@@ -463,7 +465,8 @@ class SEIR_matrix:
         return vaccinations_nr, vaccinations_r
 
 
-    def update(self, infected_visitors: float,
+    def update(self, total_population: float,
+               infected_visitors: float,
                internal_mobility_rate: float,
                pub_health_factor: float,
                fraction_at_risk_isolated: float,
@@ -479,6 +482,8 @@ class SEIR_matrix:
 
         Parameters
         ----------
+        total_population : float
+            DESCRIPTION.        
         infected_visitors : float
             DESCRIPTION.
         internal_mobility_rate : float
@@ -614,7 +619,7 @@ class SEIR_matrix:
         self.S_prev = self.S
         self.S -= self.E_nr[1] + self.E_r[1]
         # Do this update after accounting for newly exposed
-        self.vaccinated_nr,  self.vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first)
+        self.vaccinated_nr,  self.vaccinated_r = self.vaccinations(max_vaccine_doses, vaccinate_at_risk_first, total_population)
         self.S -= (self.vaccinated_nr + self.vaccinated_r)
         self.vaccinated=self.vaccinated_nr+self.vaccinated_r
         #------------------------------------------------------------------------------------------------
