@@ -108,7 +108,7 @@
 
   matrix-params:
       prob infected given exposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
-prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
+      prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
                                       0.05,0.05,0.05,0.20,0.20,0.20,0.20,0.20,
                                       0.13,0.13,0.13,0.13,0.13]
       protective efficacy of previous infection or inocculation: # points of interpolation given by month since infection/inocculation
