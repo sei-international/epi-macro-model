@@ -99,20 +99,26 @@ social distance:
         effectiveness: 0.4 # could be 0.3 instead
         start date: {year: 2020, month: 10, day: 1} # around labor day/ school start
         ramp up for: 120 # days - as indicated by onset of delta peak
-        end date: {year: 2021, month: 5, day: 18} # CDC drops mask guidance on May 18, 2021
-        ramp down for: 60 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
-    -   apply: true # CDC re-advises to wear masks on July 27, 2021
-        effectiveness: 0.4
-        start date: {year: 2021, month: 7, day: 27}
-        ramp up for: 120 # days
-        end date: {year: 2022, month: 3, day: 31}
-        ramp down for: 90 # days 
+        end date: {year: 2021, month: 7, day: 4} # CDC drops mask guidance on May 18, 2021
+        ramp down for: 90 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
+    # -   apply: true # CDC re-advises to wear masks on July 27, 2021
+    #     effectiveness: 0.4
+    #     start date: {year: 2021, month: 7, day: 27}
+    #     ramp up for: 90 # days
+    #     end date: {year: 2022, month: 3, day: 30}
+    #     ramp down for: 90 # days 
     -   apply: true # continued voluntary social distancing
-        effectiveness: 0.4
+        effectiveness: 0.5
         start date: {year: 2021, month: 4, day: 30}
-        ramp up for: 15 # days
-        end date: {year: 2022, month: 3, day: 31}
-        ramp down for: 31 # days 
+        ramp up for: 1 # days
+        end date: {year: 2022, month: 7, day: 4}
+        ramp down for: 1 # days 
+    -   apply: true # continued voluntary social distancing
+        effectiveness: 0.2
+        start date: {year: 2021, month: 7, day: 4}
+        ramp up for: 60 # days
+        end date: {year: 2022, month: 9, day: 4}
+        ramp down for: 1 # days 
      
         
 international travel restrictions:
