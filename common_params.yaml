@@ -5,7 +5,7 @@
 ###############################################################
 time:
     start date: {year: 2015, month: 12, day: 31}
-    COVID start: {year: 2020, month: 3, day: 2}
+    COVID start: {year: 2020, month: 2, day: 2}
     end date: {year: 2022, month: 3, day: 31}
 
 ###############################################################
@@ -85,28 +85,35 @@ social distance:
     -   apply: true
         effectiveness: 0.7
         start date: {year: 2020, month: 3, day: 17}
-        ramp up for: 15 # days
+        ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
         ramp down for: 120 # days
     -   apply: true # voluntary social distancing during the summer
-        effectiveness: 0.3
-        start date: {year: 2020, month: 7, day: 30}
-        ramp up for: 1 # days
+        effectiveness: 0.4
+        start date: {year: 2020, month: 6, day: 30}
+        ramp up for: 15 # days
         end date: {year: 2020, month: 11, day: 26}
-        ramp down for: 90 # days
-    # Assume ramp up again after August 2020 until April         
+        ramp down for: 120 # days
+    # Assume ramp up again after Labor Day 2020 until June        
     -   apply: true
-        effectiveness: 0.3
+        effectiveness: 0.4 # could be 0.3 instead
         start date: {year: 2020, month: 10, day: 1} # around labor day/ school start
-        ramp up for: 90 # days - as indicated by onset of delta peak
+        ramp up for: 120 # days - as indicated by onset of delta peak
         end date: {year: 2021, month: 5, day: 18} # CDC drops mask guidance on May 18, 2021
-        ramp down for: 120 # days # bumps in cases between April and June suggest slow drop of mask guidance
+        ramp down for: 60 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
     -   apply: true # CDC re-advises to wear masks on July 27, 2021
-        effectiveness: 0.3
+        effectiveness: 0.4
         start date: {year: 2021, month: 7, day: 27}
-        ramp up for: 1 # days
+        ramp up for: 120 # days
         end date: {year: 2022, month: 3, day: 31}
-        ramp down for: 31 # days       
+        ramp down for: 90 # days 
+    -   apply: true # continued voluntary social distancing
+        effectiveness: 0.4
+        start date: {year: 2021, month: 4, day: 30}
+        ramp up for: 15 # days
+        end date: {year: 2022, month: 3, day: 31}
+        ramp down for: 31 # days 
+     
         
 international travel restrictions:
     # Airport closure

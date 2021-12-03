@@ -7,7 +7,7 @@
 ###############################################################
 - name: Baseline variant
 
-  start date: {year: 2020, month: 3, day: 2}
+  start date: {year: 2020, month: 2, day: 2}
 
   R0: 
     1st infection: 2.25
@@ -57,8 +57,8 @@
 
   initial:
     infected fraction:
-      Ports of entry: 30 # As a fraction of total population per 1000 (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
-      Other provinces: 1 
+      Ports of entry: 0.005 # As a fraction of total population (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
+      Other provinces: 0.0001 
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 1]
@@ -127,8 +127,8 @@
 
   initial: # at variant's start date
     infected fraction:
-      Ports of entry: 0.9 # As a fraction of total population per 1000
-      Other provinces: 0.1
+      Ports of entry: 0.001 # As a fraction of total population
+      Other provinces: 0.0001
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
