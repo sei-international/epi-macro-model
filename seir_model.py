@@ -198,7 +198,7 @@ class SEIR_matrix:
         region_keys=list(seir_params['initial']['infected fraction'].keys())
         for i in range(0,len(region_keys)):
             if region_keys[i]==region['name']:
-                self.initial_infected = seir_params['initial']['infected fraction'][region_keys[i]] * self.N/1000 # Entered per 1000
+                self.initial_infected = seir_params['initial']['infected fraction'][region_keys[i]] * self.N
                 initial_infected = self.initial_infected
         self.Itot = initial_infected
         self.Itot_prev = initial_infected
