@@ -25,8 +25,8 @@
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
-      average: 0.38
-      at risk: 0.60
+      average: 0.062
+      at risk: 0.215
 
   case fatality rate among reinfections:
       average: 0.008
@@ -59,6 +59,7 @@
     infected fraction:
       Ports of entry: 0.005 # As a fraction of total population (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
       Other provinces: 0.0001 
+
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 1]
@@ -129,6 +130,7 @@
     infected fraction:
       Ports of entry: 0.005 # As a fraction of total population
       Other provinces: 0.001
+
 
   proportion of global infection rate:
       - [{year: 2020, month: 1, day: 1}, 0.0000]
