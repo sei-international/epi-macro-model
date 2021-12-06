@@ -83,15 +83,15 @@ test and trace: # until testing capabilities are ramped up
 social distance:
     # An official lockdown -- adds to a baseline level (below)
     -   apply: true
-        effectiveness: 0.6
+        effectiveness: 0.7
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
-        ramp down for: 120 # days
+        ramp down for: 110 # days
     -   apply: true # voluntary social distancing during the summer
         effectiveness: 0.4
         start date: {year: 2020, month: 6, day: 30}
-        ramp up for: 15 # days
+        ramp up for: 31 # days
         end date: {year: 2020, month: 10, day: 30}
         ramp down for: 60 # days
     # Assume ramp up again after Labor Day 2020 until vaccinations        
