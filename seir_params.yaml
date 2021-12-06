@@ -28,6 +28,7 @@
       average: 0.062
       at risk: 0.215
 
+
   case fatality rate among reinfections:
       average: 0.008
       at risk: 0.033
@@ -57,7 +58,7 @@
 
   initial:
     infected fraction:
-      Ports of entry: 0.005 # As a fraction of total population (results in ~10900 infections at a mortality rate of 0.0056 eq. to 57 deaths registered on March 12, 2020)
+      Ports of entry: 0.005 # As a fraction of total population
       Other provinces: 0.0001 
 
 
