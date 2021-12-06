@@ -59,7 +59,7 @@
   initial:
     infected fraction:
       Ports of entry: 0.001 # As a fraction of total population
-      Other provinces: 0.001 
+      Other provinces: 0.0005 
 
 
   proportion of global infection rate:

@@ -83,21 +83,21 @@ test and trace: # until testing capabilities are ramped up
 social distance:
     # An official lockdown -- adds to a baseline level (below)
     -   apply: true
-        effectiveness: 0.7
+        effectiveness: 0.6
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
-        ramp down for: 110 # days
+        ramp down for: 90 # days
     -   apply: true # voluntary social distancing during the summer
         effectiveness: 0.4
         start date: {year: 2020, month: 6, day: 30}
         ramp up for: 31 # days
-        end date: {year: 2020, month: 10, day: 30}
+        end date: {year: 2020, month: 10, day: 30} # fall/beginning of school start ppl start going back in doors
         ramp down for: 60 # days
     # Assume ramp up again after Labor Day 2020 until vaccinations        
     -   apply: true
         effectiveness: 0.4 # could be 0.3 instead
-        start date: {year: 2020, month: 10, day: 1} # around school start concerns are raised over winter
+        start date: {year: 2020, month: 10, day: 1} # at beginning of fall/school start concerns are raised over winter
         ramp up for: 120 # days - as indicated by onset of delta peak
         end date: {year: 2021, month: 7, day: 4} # CDC drops mask guidance on May 18, 2021
         ramp down for: 90 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
