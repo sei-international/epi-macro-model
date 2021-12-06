@@ -413,8 +413,8 @@ class SEIR_matrix:
             adj_comm_spread_frac = self.comm_spread_frac
         adj_base_individual_exposure_rate = self.base_individual_exposure_rate/(adj_comm_spread_frac + self.eps)
         p_i = n_i/(self.N_prev + self.eps)
-        cv_corr = self.coeff_of_variation_i**2 * n_i/(self.S_prev + self.eps)
-        clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/(self.S_prev + self.eps)
+        cv_corr = self.coeff_of_variation_i**2 * n_i/(self.S_prev + np_sum(self.R_nr+self.R_r) + self.eps)
+        clust_corr = (1 - adj_comm_spread_frac) * self.N_prev/(self.S_prev + np_sum(self.R_nr+self.R_r) + self.eps)
         # per person in the population
         base_rate = adj_base_individual_exposure_rate * p_i * max(0, 1 - cv_corr - clust_corr)
 
