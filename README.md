@@ -1,5 +1,5 @@
 # COVID baseline model
-This is the Python source code for SEI's "epi-macro model", an epidemiological-macroeconomic model for medium-run analysis in developing countries. The software allows planners to explore likely scenarios in ways that take into account the ways in which the pandemic and related policy measures may affect the national economy and the global economic environment
+This is the Python source code for SEI's "epi-macro model", an epidemiological-macroeconomic model for medium-run analysis in developing countries. The software allows planners to explore likely scenarios that take into account the ways in which the pandemic and related policy measures may affect the national economy and the global economic environment
 
 **Key features include:**
   - explore effect of public health measures including social distancing, masking, isolation of vulnerable populations and vaccination on epidemic developments and the national economy
