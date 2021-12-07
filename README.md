@@ -1,4 +1,4 @@
-# COVID baseline model
+# Epidemiological-macroeconomic Model
 This is the Python source code for the SEI Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
