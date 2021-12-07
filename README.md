@@ -1,11 +1,12 @@
 # COVID baseline model
-This is the Python source code for the SEI Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account the ways in which the pandemic and related policy measures may affect the national economy and the global economic environment
+This is the Python source code for the SEI Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
-  * explore the effect of public health measures such as international travel restrictions, social distancing, isolating people who show symptoms, isolating the high-risk population, testing and tracing, and vaccination regimes on epidemic developments and the national economy
+  * explore the effect of public health measures such as international travel restrictions, social distancing, isolating symptomatic and vulnerable individuals, testing and tracing, and vaccination regimes on epidemic developments and the national economy
   * examine potential ramifications for sector-specific outputs, value added, and gross domestic product (GDP)
+  * consider regional variations such as rural and urban settings, or in destinations that attract, or are seldom affected by, international travel.
   * ability to simulate multiple strains of a contagious disease like COVID-19
-  * ability to simulate risk of reinfection and waning immunity 
+  * ability to simulate reinfections and waning immunity 
 
 The script can be run using any Python 3.x. There is also a 64-bit Windows executable available.
 
