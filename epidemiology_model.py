@@ -285,8 +285,7 @@ def epidemiology_model():
                 hospitalized[j] += ( hosp_per_infective_1stinfections * np_sum(e.I_r + e.I_nr) + hosp_per_infective_reinfections * np_sum(e.RI_r + e.RI_nr) )
             hospitalization_index_region[j] = bed_occupancy_factor + hospitalized[j] /baseline_hosp[j] 
 
-        hospitalization_index[i] = average(hospitalization_index_region) ## check this
-        #hospitalization_index[i] = np_sum(hospitalized)
+        hospitalization_index[i] = np_amax(hospitalization_index_region) ## check this
         mortality_rate[i] = np_sum(new_deaths_over_time[:,i,:] )/309200000* 100000 # per 100,000
 
         #True up susceptible pools, total population and recovered pools between variants
