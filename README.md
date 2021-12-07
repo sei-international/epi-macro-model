@@ -2,7 +2,7 @@
 This is the Python source code for the SEI Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
-  * Modeling effect of public health measures on epidemic developments and the national economy, such as
+  * Modeling epidemic and economic impact of public health measures such as:
      * International travel restrictions
      * Social distancing
      * Isolating symptomatic and vulnerable individuals
