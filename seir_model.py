@@ -79,12 +79,12 @@ class SEIR_matrix:
         self.invisible_fraction_1stinfection = seir_params['unobserved fraction of cases']['first infection']
         self.invisible_fraction_reinfection = seir_params['unobserved fraction of cases']['reinfection']
 
-        self.exp2inf = np_array(seir_params['matrix-params']['prob infected given exposed'])
-        self.rexp2rinf = np_array(seir_params['matrix-params']['prob reinfected given reexposed'])
+        self.exp2inf = np_array(seir_params['transitioning rates']['prob infected given exposed'])
+        self.rexp2rinf = np_array(seir_params['transitioning rates']['prob reinfected given reexposed'])
         
-        inf2rd_ave = np_array(seir_params['matrix-params']['prob recover or death given infected'])
-        if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
-            rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk']
+        inf2rd_ave = np_array(seir_params['transitioning rates']['prob recover or death given infected'])
+        if 'recovery rate for at risk as fraction of not at risk' in seir_params['transitioning rates']:
+            rr_for_r = seir_params['transitioning rates']['recovery rate for at risk as fraction of not at risk']
         else:
             rr_for_r = 1.0
         recover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_nr)/(1 - self.case_fatality_rate_r)
@@ -94,9 +94,9 @@ class SEIR_matrix:
         if max(self.inf2rd_r) >= 1:
             raise ValueError("Imputed recovery rate of population at risk exceeds 100% for at least one time step")
 
-        rinf2imm_ave = np_array(seir_params['matrix-params']['prob immunity or death given reinfected']) 
-        if 'recovery rate for at risk as fraction of not at risk' in seir_params['matrix-params']:
-            rr_for_r = seir_params['matrix-params']['recovery rate for at risk as fraction of not at risk among reinfected']
+        rinf2imm_ave = np_array(seir_params['transitioning rates']['prob immunity or death given reinfected']) 
+        if 'recovery rate for at risk as fraction of not at risk' in seir_params['transitioning rates']:
+            rr_for_r = seir_params['transitioning rates']['recovery rate for at risk as fraction of not at risk among reinfected']
         else:
             rr_for_r = 1.0
         rerecover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_reinf_nr)/(1 - self.case_fatality_rate_reinf_r)
@@ -178,7 +178,7 @@ class SEIR_matrix:
 
         # protective efficacy of vaccine or previous infection since month being fully vaccinated
         ndays_month=30.42
-        protective_efficacy_points = np_array(seir_params['matrix-params']['protective efficacy of previous infection or inocculation'])
+        protective_efficacy_points = np_array(seir_params['protective efficacy of previous infection or inocculation'])
         protective_efficacy_npoints = len(protective_efficacy_points)
         #protective_efficacy_traj_start = protective_efficacy_points[0][0]['month']*ndays_month
         protective_efficacy_traj_end = protective_efficacy_points[protective_efficacy_npoints-1][0]['month']
