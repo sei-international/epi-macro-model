@@ -1,5 +1,5 @@
 # Epidemiological-macroeconomic Model
-This is the Python source code for the SEI Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
+This is the Python source code for the Stockholm Environment Institute (SEI) Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
   * Modeling epidemic and economic impact of public health measures such as:
@@ -21,4 +21,7 @@ For instructions on using the Epi-macro Model, see the documentation.
 
 ## For more information
 
-The Epi-macro Model team includes several SEI staff: Charlotte Wagner, Eric Kemp-Benedict, and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
+The Epi-macro Model team includes several SEI staff: Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
+
+## Funding 
+The Epi-macro Model is a project of the Stockholm Environment Institute (SEI). Key contributors include Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. The project was started through an SEI Rapid Response grant funded by the Swedish International Development Cooperation Agency (Sida).
