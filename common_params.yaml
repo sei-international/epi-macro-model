@@ -80,39 +80,43 @@ test and trace: # until testing capabilities are ramped up
         ramp down for: 31
 
 social distance:
-    # An official lockdown -- adds to a baseline level (below)
+    # An official lockdown 
     -   apply: true
         effectiveness: 0.6
         start date: {year: 2020, month: 3, day: 17}
         ramp up for: 31 # days
         end date: {year: 2020, month: 7, day: 30}
         ramp down for: 90 # days
-    -   apply: true # voluntary social distancing during the summer
+    # voluntary social distancing during the Northern-hemisphere summer
+    -   apply: true 
         effectiveness: 0.4
         start date: {year: 2020, month: 6, day: 30}
         ramp up for: 31 # days
-        end date: {year: 2020, month: 10, day: 30} # fall/beginning of school start ppl start going back in doors
+        end date: {year: 2020, month: 10, day: 30} 
         ramp down for: 60 # days
-    # Assume ramp up again after Labor Day 2020 until vaccinations        
+    # Official social distancing measures - limiting of congregations, indoor seating in restaurants, etc. until vaccination        
     -   apply: true
         effectiveness: 0.4 
-        start date: {year: 2020, month: 10, day: 30} # at beginning of fall/school start concerns are raised over winter
-        ramp up for: 120 # days - as indicated by onset of delta peak
-        end date: {year: 2021, month: 7, day: 4} # CDC drops mask guidance on May 18, 2021
-        ramp down for: 90 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
-    -   apply: true # continued voluntary social distancing while population gets vaccinated
+        start date: {year: 2020, month: 10, day: 30} 
+        ramp up for: 120 # days
+        end date: {year: 2021, month: 7, day: 4}  
+        ramp down for: 90 # days 
+    # Continued voluntary social distancing while population is being vaccinated
+    -   apply: true 
         effectiveness: 0.5
         start date: {year: 2021, month: 4, day: 15}
         ramp up for: 15 # days
         end date: {year: 2021, month: 11, day: 30}
         ramp down for: 31 # days 
-    -   apply: true # CDC re-advises to wear masks on July 27, 2021
+    # renewed mask guidance 
+    -   apply: true 
         effectiveness: 0.3
         start date: {year: 2021, month: 7, day: 27}
         ramp up for: 60 # days
         end date: {year: 2022, month: 3, day: 30}
         ramp down for: 90 # days
-    -   apply: true # continued voluntary social distancing while population gets vaccinated
+    # Social distancing measures during colder months in Northern hemisphere
+    -   apply: true 
         effectiveness: 0.3
         start date: {year: 2021, month: 10, day: 30}
         ramp up for: 31 # days
