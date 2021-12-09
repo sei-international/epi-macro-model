@@ -113,15 +113,15 @@ social distance:
         effectiveness: 0.3
         start date: {year: 2021, month: 7, day: 27}
         ramp up for: 60 # days
-        end date: {year: 2022, month: 3, day: 30}
+        end date: {year: 2022, month: 12, day: 30}
         ramp down for: 90 # days
     # Social distancing measures during colder months in Northern hemisphere
     -   apply: true 
         effectiveness: 0.3
         start date: {year: 2021, month: 10, day: 30}
         ramp up for: 31 # days
-        end date: {year: 2022, month: 12, day: 31}
-        ramp down for: 90 # days 
+        end date: {year: 2022, month: 6, day: 30}
+        ramp down for: 30 # days 
 
      
         
@@ -154,8 +154,9 @@ vaccination:
     vaccinate at risk first: true
     maximum doses per day:
         - [{year: 2021, month: 2, day: 1}, 0] 
-        - [{year: 2021, month: 2, day: 15}, 33000] # -> 1.64M /2
-        - [{year: 2021, month: 4, day: 14}, 56000] #56000
+        - [{year: 2021, month: 2, day: 15}, 33000]  
+        - [{year: 2021, month: 4, day: 14}, 56000] 
         - [{year: 2021, month: 7, day: 11}, 11000]
         - [{year: 2021, month: 9, day: 2}, 18000] 
         - [{year: 2021, month: 12, day: 1}, 1000] 
+        - [{year: 2022, month: 1, day: 1}, 10000]
