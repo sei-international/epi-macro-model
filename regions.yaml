@@ -4,9 +4,9 @@
 #
 ###############################################################
 - name: Ports of entry
-  number of localities: 34 # 3006 counties, 50 states
+  number of localities: 34 # urban congressional districts
   initial:
-    population: 24174000
+    population: 1000000 #24174000
     beds per 1000: 2.4
     population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
@@ -16,9 +16,9 @@
       daily arrivals: 217000 # Annual (79.1 million) divided by 365
       duration of stay: 7 # Assume 1 week/visitor
 - name: Other provinces
-  number of localities: 401 # 3006 counties, 50 states
+  number of localities: 401 # other congressional districts
   initial:
-    population: 285111000
+    population: 12500000 #285111000
     beds per 1000: 2.4 # Assume same in both regions
     population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day

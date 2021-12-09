@@ -5,8 +5,8 @@
 ###############################################################
 time:
     start date: {year: 2015, month: 12, day: 31}
-    COVID start: {year: 2020, month: 2, day: 2}
-    end date: {year: 2022, month: 3, day: 31}
+    COVID start: {year: 2020, month: 1, day: 1}
+    end date: {year: 2021, month: 12, day: 21}
 
 ###############################################################
 #
@@ -36,8 +36,7 @@ global infection rate: # per 1000 across variants
     - [{year: 2021, month: 2, day: 19}, 0.7595]
     - [{year: 2021, month: 5, day: 15}, 0.4105]
     - [{year: 2021, month: 7, day: 15}, 0.2566]
-    - [{year: 2021, month: 12, day: 31}, 0.0513]
-    - [{year: 2022, month: 3, day: 31}, 0.0021]
+    - [{year: 2021, month: 12, day: 8}, 0.0789]
 
 # For global GDP trajectory:
 #  - Specify growth on an annualized basis
@@ -76,7 +75,7 @@ test and trace: # until testing capabilities are ramped up
     -   apply: true
         fraction of infectious cases isolated: 0.3
         start date: {year: 2020, month: 3, day: 17}
-        ramp up for: 90 # 4 month
+        ramp up for: 90 # 3 month
         end date: {year: 2021, month: 12, day: 30}
         ramp down for: 31
 
@@ -96,23 +95,29 @@ social distance:
         ramp down for: 60 # days
     # Assume ramp up again after Labor Day 2020 until vaccinations        
     -   apply: true
-        effectiveness: 0.4 # could be 0.3 instead
+        effectiveness: 0.4 
         start date: {year: 2020, month: 10, day: 30} # at beginning of fall/school start concerns are raised over winter
         ramp up for: 120 # days - as indicated by onset of delta peak
         end date: {year: 2021, month: 7, day: 4} # CDC drops mask guidance on May 18, 2021
         ramp down for: 90 # days # bumps in cases between April and June suggest slow drop of mask guidance # could be 90 instead
     -   apply: true # continued voluntary social distancing while population gets vaccinated
         effectiveness: 0.5
-        start date: {year: 2021, month: 5, day: 18}
-        ramp up for: 1 # days
-        end date: {year: 2022, month: 10, day: 30}
-        ramp down for: 120 # days 
+        start date: {year: 2021, month: 4, day: 15}
+        ramp up for: 15 # days
+        end date: {year: 2021, month: 11, day: 30}
+        ramp down for: 31 # days 
     -   apply: true # CDC re-advises to wear masks on July 27, 2021
-        effectiveness: 0.2
+        effectiveness: 0.3
         start date: {year: 2021, month: 7, day: 27}
-        ramp up for: 31 # days
+        ramp up for: 60 # days
         end date: {year: 2022, month: 3, day: 30}
         ramp down for: 90 # days
+    -   apply: true # continued voluntary social distancing while population gets vaccinated
+        effectiveness: 0.3
+        start date: {year: 2021, month: 10, day: 30}
+        ramp up for: 31 # days
+        end date: {year: 2022, month: 6, day: 30}
+        ramp down for: 90 # days 
 
      
         
@@ -145,7 +150,8 @@ vaccination:
     vaccinate at risk first: true
     maximum doses per day:
         - [{year: 2021, month: 2, day: 1}, 0] 
-        - [{year: 2021, month: 2, day: 15}, 823000] # -> 1.64M /2
-        - [{year: 2021, month: 4, day: 14}, 1650000]
-        - [{year: 2021, month: 7, day: 11}, 263000]
-        - [{year: 2021, month: 9, day: 2}, 461000] 
+        - [{year: 2021, month: 2, day: 15}, 33000] # -> 1.64M /2
+        - [{year: 2021, month: 4, day: 14}, 56000] #56000
+        - [{year: 2021, month: 7, day: 11}, 11000]
+        - [{year: 2021, month: 9, day: 2}, 18000] 
+        - [{year: 2021, month: 12, day: 1}, 1000] 
