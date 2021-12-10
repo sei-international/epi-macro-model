@@ -26,8 +26,8 @@
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
-      average: 0.062
-      at risk: 0.215
+      average: 0.031
+      at risk: 0.108
 
 
   case fatality rate among reinfections:
@@ -35,8 +35,8 @@
       at risk: 0.033
 
   fraction of observed reinfection cases requiring hospitalization:
-      average: 0.042
-      at risk: 0.120
+      average: 0.021
+      at risk: 0.060
 
   transitioning rates:
       prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
@@ -100,16 +100,16 @@
       overflow hospitalized mortality rate factor: 2
 
   fraction of observed cases among 1st infections requiring hospitalization:
-      average: 0.060
-      at risk: 0.206
+      average: 0.030
+      at risk: 0.103
 
   case fatality rate among reinfections:
       average: 0.008
       at risk: 0.033
 
   fraction of observed reinfection cases requiring hospitalization:
-      average: 0.042
-      at risk: 0.120
+      average: 0.021
+      at risk: 0.060
 
   transitioning rates:
       prob infected given exposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
