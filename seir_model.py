@@ -196,6 +196,10 @@ class SEIR_matrix:
         # Total population and population at risk
         self.N = initial_values['population']
         region_keys=list(seir_params['initial']['infected fraction'].keys())
+        if region['name'] not in region_keys:
+            print('Error: Region names do not match')
+            print('Check that region names in regions.yaml and seir_params.yaml match')
+            exit()
         for i in range(0,len(region_keys)):
             if region_keys[i]==region['name']:
                 self.initial_infected = seir_params['initial']['infected fraction'][region_keys[i]] * self.N
