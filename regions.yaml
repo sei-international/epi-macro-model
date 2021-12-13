@@ -3,7 +3,7 @@
 # Regions
 #
 ###############################################################
-- name: Urban
+- name: Ports of entry
   number of localities: 34 
   initial:
     population: 1000000
@@ -15,7 +15,7 @@
   international travel:
       daily arrivals: 217000 
       duration of stay: 7 # Assume 1 week/visitor
-- name: Rural
+- name: Other provinces
   number of localities: 401 
   initial:
     population: 12500000
