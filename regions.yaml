@@ -3,24 +3,27 @@
 # Regions
 #
 ###############################################################
-- name: Ports of entry
-  number of localities: 34 # urban congressional districts
+- name: Urban
+  number of localities: 34 
   initial:
-    population: 1000000 #24174000
+    population: 1000000
     beds per 1000: 2.4
     population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
-  between locality mobility rate: 0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+  between locality mobility rate: 0.00657 
   between region mobility rate: 0.001
   international travel:
-      daily arrivals: 217000 # Annual (79.1 million) divided by 365
+      daily arrivals: 217000 
       duration of stay: 7 # Assume 1 week/visitor
-- name: Other provinces
-  number of localities: 401 # other congressional districts
+- name: Rural
+  number of localities: 401 
   initial:
-    population: 12500000 #285111000
+    population: 12500000
     beds per 1000: 2.4 # Assume same in both regions
     population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
-  between locality mobility rate: 0.0001 #0.00657 # 40% of Americans travel "a few times a year", so, for a 2-day duration: 2 * 40% * 3/365 = 0.00657
+  between locality mobility rate: 0.0001
   between region mobility rate: 0.0001
+
+
+

@@ -123,7 +123,6 @@ social distance:
         end date: {year: 2022, month: 6, day: 30}
         ramp down for: 30 # days 
 
-     
         
 international travel restrictions:
     # Airport closure
@@ -150,7 +149,7 @@ international travel restrictions:
 ###############################################################
 
 vaccination:
-    time to efficacy: 6 # weeks  - 6 weeks between doses +2 weeks to efficacy
+    time to efficacy: 6 # weeks  - 4 weeks between doses +2 weeks to efficacy
     vaccinate at risk first: true
     maximum doses per day:
         - [{year: 2021, month: 2, day: 1}, 0] 
