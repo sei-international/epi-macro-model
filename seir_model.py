@@ -94,15 +94,15 @@ class SEIR_matrix:
         if max(self.inf2rd_r) >= 1:
             raise ValueError("Imputed recovery rate of population at risk exceeds 100% for at least one time step")
 
-        rinf2imm_ave = np_array(seir_params['transitioning rates']['prob immunity or death given reinfected']) 
+        rinf2rr_ave = np_array(seir_params['transitioning rates']['prob recovery or death given reinfected']) 
         if 'recovery rate for at risk as fraction of not at risk' in seir_params['transitioning rates']:
             rr_for_r = seir_params['transitioning rates']['recovery rate for at risk as fraction of not at risk among reinfected']
         else:
             rr_for_r = 1.0
         rerecover_rate_ratio = rr_for_r * (1 - self.case_fatality_rate_reinf_nr)/(1 - self.case_fatality_rate_reinf_r)
         adj_factor = 1 + (1 + rerecover_rate_ratio) * self.population_at_risk_frac
-        self.rinf2imm_nr = rinf2imm_ave/adj_factor
-        self.rinf2imm_r = recover_rate_ratio * self.rinf2imm_nr
+        self.rinf2rr_nr = rinf2rr_ave/adj_factor
+        self.rinf2rr_r = recover_rate_ratio * self.rinf2rr_nr
         if max(self.inf2rd_r) >= 1:
             raise ValueError("Imputed recovery rate of reinfected population at risk exceeds 100% for at least one time step")
         #-------------------------------------------------------------------
@@ -137,7 +137,7 @@ class SEIR_matrix:
         self.infective_time_period = len(inf2rd_ave)
         self.exposed_time_period = len(self.exp2inf)
         self.reexposed_time_period = len(self.rexp2rinf)
-        self.reinfected_time_period = len(rinf2imm_ave)
+        self.reinfected_time_period = len(rinf2rr_ave)
         # Mean infectious period is calculated based on the matrix model
         self.mean_infectious_period = 0
         P = 1
@@ -245,8 +245,8 @@ class SEIR_matrix:
         self.RI_nr = np_zeros(self.reinfected_time_period + 1)
         self.RI_r = np_zeros(self.reinfected_time_period+ 1)
 
-        # Immune after 2nd infection
-        self.Im = 0 
+        # Rerecovered after 2nd infection
+        self.RR = 0 
 
         # Susceptible population
         self.S = self.N - self.Itot - np_sum(self.R_nr) - np_sum(self.R_r)
@@ -517,20 +517,20 @@ class SEIR_matrix:
 
         """
         #------------------------------------------------------------------------------------------------
-        # 1: Shift reinfected pool and calculated new immune after second infection
+        # 1: Shift reinfected pool and calculated new recovered after second infection
         #------------------------------------------------------------------------------------------------
-        immune_or_deceased_nr = self.RI_nr[self.reinfected_time_period]
-        immune_or_deceased_r = self.RI_r[self.reinfected_time_period]
+        rerecovered_or_deceased_nr = self.RI_nr[self.reinfected_time_period]
+        rerecovered_or_deceased_r = self.RI_r[self.reinfected_time_period]
         for j in range(self.reinfected_time_period,1,-1):
-            immune_or_deceased_nr = immune_or_deceased_nr + self.rinf2imm_nr[j-1]*self.RI_nr[j-1]
-            immune_or_deceased_r = immune_or_deceased_r + self.rinf2imm_r[j-1]*self.RI_r[j-1]
-            self.RI_nr[j] = (1 - self.rinf2imm_nr[j-1]) * self.RI_nr[j-1]
-            self.RI_r[j] = (1 - self.rinf2imm_r[j-1]) * self.RI_r[j-1]
+            rerecovered_or_deceased_nr = rerecovered_or_deceased_nr + self.rinf2rr_nr[j-1]*self.RI_nr[j-1]
+            rerecovered_or_deceased_r = rerecovered_or_deceased_r + self.rinf2rr_r[j-1]*self.RI_r[j-1]
+            self.RI_nr[j] = (1 - self.rinf2rr_nr[j-1]) * self.RI_nr[j-1]
+            self.RI_r[j] = (1 - self.rinf2rr_r[j-1]) * self.RI_r[j-1]
         self.RI_nr[1] = self.RE_nr[self.reexposed_time_period]
         self.RI_r[1] = self.RE_r[self.reexposed_time_period]
 
         #------------------------------------------------------------------------------------------------
-        # 2: Separate immune/deceased into immune and deceased pools and update total population
+        # 2: Separate rerecovered/deceased into recovered and deceased pools and update total population
         #------------------------------------------------------------------------------------------------
         # Ignore visitors and internal mobility for this calculation: This is due to progress of the disease alone
         if self.comm_spread_frac == 0:
@@ -538,16 +538,16 @@ class SEIR_matrix:
         else:
             infected_fraction = Itot_rgn_allvars/(max(comm_spread_frac_allvars) * self.N) 
         m_nr_reinf, m_r_reinf = self.mortality_rate(infected_fraction, bed_occupancy_fraction, beds_per_1000, 2)
-        self.new_deaths_reinf = m_nr_reinf * immune_or_deceased_nr + m_r_reinf * immune_or_deceased_r
-        self.curr_mortality_rate_reinf = self.new_deaths_reinf/(immune_or_deceased_nr + immune_or_deceased_r + self.eps)
-        self.recovered_pool_reinf = immune_or_deceased_nr + immune_or_deceased_r - self.new_deaths_reinf
-        self.recovered_pool_reinf_nr = immune_or_deceased_nr - m_nr_reinf * immune_or_deceased_nr 
-        self.recovered_pool_reinf_r = immune_or_deceased_r - m_r_reinf * immune_or_deceased_r
+        self.new_deaths_reinf = m_nr_reinf * rerecovered_or_deceased_nr + m_r_reinf * rerecovered_or_deceased_r
+        self.curr_mortality_rate_reinf = self.new_deaths_reinf/(rerecovered_or_deceased_nr + rerecovered_or_deceased_r + self.eps)
+        self.recovered_pool_reinf = rerecovered_or_deceased_nr + rerecovered_or_deceased_r - self.new_deaths_reinf
+        self.recovered_pool_reinf_nr = rerecovered_or_deceased_nr - m_nr_reinf * rerecovered_or_deceased_nr 
+        self.recovered_pool_reinf_r = rerecovered_or_deceased_r - m_r_reinf * rerecovered_or_deceased_r
         
         #------------------------------------------------------------------------------------------------
         # 3: Update recovered pool and total population
         #------------------------------------------------------------------------------------------------
-        self.Im += self.recovered_pool_reinf
+        self.RR += self.recovered_pool_reinf
         # Update N
         self.N_prev = self.N
         self.N -= self.new_deaths_reinf
