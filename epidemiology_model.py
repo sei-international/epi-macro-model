@@ -311,4 +311,4 @@ def epidemiology_model():
    
     return nvars, seir_params_multivar, nregions, regions, start_time, end_time, epi_datetime_array, susceptible_over_time, \
        exposed_over_time, infective_over_time, recovered_over_time, vaccinated_over_time, deaths_over_time, deaths_reinf_over_time, reexposed_over_time, reinfective_over_time, \
-       immune_over_time, hospitalization_index, mortality_rate
+       immune_over_time, hospitalization_index

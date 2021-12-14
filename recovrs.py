@@ -34,21 +34,21 @@ for opt, arg in opts:
 
 print('Running epidemiological model...')
 try:
-    nvars, variant_params, nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, deaths, deaths2, reexposed, reinfective, immune, hosp_ndx, epi = epidemiology_model()
-for v in range(0,nvars):
-    for j in range(0,nrgn):
-        info = rgns[j]
-        d = {'date': epi_dts,
-             'susceptible': susceptible[j,0:end-start,v],
-             'exposed': exposed[j,0:end-start,v],
-             'infected': infective[j,0:end-start,v],
-             'recovered': recovered[j,0:end-start,v],
-             'died': deaths[j,0:end-start,v],
-             'died_from_reinfection': deaths2[j,0:end-start,v],
-             'reexposed': reexposed[j,0:end-start,v],
-             'reinfected': reinfective[j,0:end-start,v],
-             'immune': immune[j,0:end-start,v]}
-        DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '_' + re.sub(r'\s+', '_', variant_params[v]['name']) + '.csv', index=False)
+    nvars, variant_params, nrgn, rgns, start, end, epi_dts, susceptible, exposed, infective, recovered, vaccinated, deaths, deaths2, reexposed, reinfective, immune, hosp_ndx = epidemiology_model()
+    for v in range(0,nvars):
+        for j in range(0,nrgn):
+            info = rgns[j]
+            d = {'date': epi_dts,
+                'susceptible': susceptible[j,0:end-start,v],
+                'exposed': exposed[j,0:end-start,v],
+                'infected': infective[j,0:end-start,v],
+                'recovered': recovered[j,0:end-start,v],
+                'died': deaths[j,0:end-start,v],
+                'died during reinfection': deaths2[j,0:end-start,v],
+                'reexposed': reexposed[j,0:end-start,v],
+                'reinfected': reinfective[j,0:end-start,v],
+                'immune': immune[j,0:end-start,v]}
+            DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '_' + re.sub(r'\s+', '_', variant_params[v]['name']) + '.csv', index=False)
 except Exception:
     traceback.print_exc()
 
