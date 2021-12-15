@@ -1,27 +1,29 @@
-# Epidemiological-macroeconomic Model
+# Epidemiological-Macroeconomic Model
 This is the Python source code for the Stockholm Environment Institute (SEI) Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
-  * Modeling epidemic and economic impact of public health measures such as:
+   * Modeling of potential ramifications for sector-specific outputs, value added, and gross domestic product (GDP)
+   * Modeling epidemic and economic impact of public health measures such as:
      * International travel restrictions
      * Social distancing
      * Isolating symptomatic and vulnerable individuals
      * Testing and tracing 
-     * Vaccination regimes
-  * Modeling of potential ramifications for sector-specific outputs, value added, and gross domestic product (GDP)
-  * Modeling spread of multiple strains of a contagious disease like COVID-19 in a Susceptible-Exposed-Infectious-Removed (SEIR) model
+     * Vaccination roll-out
+  * Modeling spread of a contagious disease like COVID-19 in a Susceptible-Exposed-Infectious-Removed (SEIR) model, including:
+     * mutliple strains
+     * waning immunity and reinfections
   * Modeling of reinfections and waning immunity 
   * Resolution of regional variations such as rural and urban settings, or destinations that attract, or are seldom affected by, international travel.
 
 The script can be run using any Python 3.x. There is also a 64-bit Windows executable available.
 
-## Getting started with the epi-macro model
+## Getting started with the Epidemiologic-Macro Model
 
-For instructions on using the Epi-macro Model, see the documentation.
+For instructions on using the Epidemiologic-Macro Model, see the documentation.
 
 ## For more information
 
-The Epi-macro Model team includes several SEI staff: Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
+The "Epi-Macro Model" team includes several SEI staff: Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
 
 ## Funding 
-The Epi-macro Model is a project of the Stockholm Environment Institute (SEI). Key contributors include Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. The project was started through an SEI Rapid Response grant funded by the Swedish International Development Cooperation Agency (Sida).
+The Epidemiologic-Macro Model is a project of the Stockholm Environment Institute (SEI). Key contributors include Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. The project was started through an SEI Rapid Response grant funded by the Swedish International Development Cooperation Agency (Sida).
