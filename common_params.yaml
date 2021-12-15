@@ -46,6 +46,9 @@ global GDP trajectory: # Growth on an annualized basis
     - [{year: 2020, month: 5, day: 1}, -0.10]
     - [{year: 2020, month: 10, day: 1}, 0.0]
     - [{year: 2021, month: 2, day: 1}, 0.03]
+    - [{year: 2021, month: 6, day: 1}, 0.06]
+    - [{year: 2021, month: 12, day: 1}, 0.04]
+    - [{year: 2022, month: 6, day: 1}, 0.03]
 
 ###############################################################
 #

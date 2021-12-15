@@ -88,11 +88,11 @@ calib:
 public-health-response:
 # Fractional reduction in final demand when social distancing fully effective
     social-distance-sensitivity:
-        public_facing: 0.10
-        other: 0.05
+        public_facing: 0.04
+        other: 0.01
     # Fractional reduction in final demand when travel bans are in place
     travel-ban-sensitivity:
-        public_facing: 0.05
+        public_facing: 0.02
 # Fractional increase/reduction in final demand due to excess/deficit hospital visits
 hospitalization-sensitivity:
-    social_support: 0.1
+    social_support: 0.02
