@@ -43,11 +43,11 @@ try:
                 'exposed': exposed[j,0:end-start,v],
                 'infected': infective[j,0:end-start,v],
                 'recovered': recovered[j,0:end-start,v],
-                'died': deaths[j,0:end-start,v],
-                'died during reinfection': deaths2[j,0:end-start,v],
+                'died during 1st infection': deaths[j,0:end-start,v],
                 'reexposed': reexposed[j,0:end-start,v],
                 'reinfected': reinfective[j,0:end-start,v],
-                'rerecovered': rerecovered[j,0:end-start,v]}
+                'rerecovered': rerecovered[j,0:end-start,v],
+                'died during reinfection': deaths2[j,0:end-start,v]}
             DataFrame(data = d).to_csv('output_populations_' + re.sub(r'\s+', '_', rgns[j]['name']) + '_' + re.sub(r'\s+', '_', variant_params[v]['name']) + '.csv', index=False)
 except Exception:
     traceback.print_exc()
