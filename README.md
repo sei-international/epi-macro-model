@@ -20,8 +20,6 @@ The script can be run using any Python 3.x. There is also a 64-bit Windows execu
 
 For instructions on using the Epidemiologic-Macroeconomic Model, see the [manual](https://github.com/ccwagner/epi-macro-model-documentation/blob/main/epi-macro-model-documentation.pdf). For the technical documentation of the model version published on Mar 9, 2021 click [here](https://github.com/ccwagner/epi-macro-model-documentation/blob/main/epi-macro-model-manual_Appendix1-Technical-documentation_09032021.pdf).
 
-click [here](<a href="https://github.com/ccwagner/epi-macro-model-documentation/blob/main/epi-macro-model-documentation.pdf" target="_blank">PDF.</a>)
-
 ## For more information
 
 The "Epi-Macro Model" team includes several SEI staff: Eric Kemp-Benedict, Charlotte Wagner, and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
