@@ -1,5 +1,5 @@
 # Epidemiological-Macroeconomic Model
-This is the Python source code for the Stockholm Environment Institute (SEI) Epidemiological-macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
+This is the Python source code for the Stockholm Environment Institute (SEI) Epidemiological-Macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
    * Modeling of potential ramifications for sector-specific outputs, value added, and gross domestic product (GDP)
@@ -12,14 +12,13 @@ This is the Python source code for the Stockholm Environment Institute (SEI) Epi
   * Modeling spread of a contagious disease like COVID-19 in a Susceptible-Exposed-Infectious-Removed (SEIR) model, including:
      * mutliple strains
      * waning immunity and reinfections
-  * Modeling of reinfections and waning immunity 
   * Resolution of regional variations such as rural and urban settings, or destinations that attract, or are seldom affected by, international travel.
 
 The script can be run using any Python 3.x. There is also a 64-bit Windows executable available.
 
-## Getting started with the Epidemiologic-Macro Model
+## Getting started with the Epidemiologic-Macroeconomic Model
 
-For instructions on using the Epidemiologic-Macro Model, see the documentation.
+For instructions on using the Epidemiologic-Macroeconomic Model, see the [documentation](https://github.com/sei-international/epidemic-macro-model/blob/main/epi-macro-model-documentation.pdf). For the technical documentation of the version published on Mar 9, 2021 click [here].
 
 ## For more information
 
