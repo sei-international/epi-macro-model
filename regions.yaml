@@ -4,25 +4,26 @@
 #
 ###############################################################
 - name: Ports of entry
-  number of localities: 72 #  Total districts in provinces containing ports of entry
+  number of localities: 34 
   initial:
-    population: 16.5e+06
-    beds per 1000: 0.9
-    infected fraction: 0.006 # Per 1000 population
-    population with community spread: 0.15 # As fraction of population
+    population: 1000000
+    beds per 1000: 2.4
+    population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
-  between locality mobility rate: 0.01
+  between locality mobility rate: 0.00657 
   between region mobility rate: 0.001
   international travel:
-      daily arrivals: 6000
+      daily arrivals: 217000 
       duration of stay: 7 # Assume 1 week/visitor
 - name: Other provinces
-  number of localities: 200 # The remaining districts
+  number of localities: 401 
   initial:
-    population: 12.9e+06
-    beds per 1000: 0.9 # Assume same in both regions
-    infected fraction: 0
-    population with community spread: 0 # As a fraction of total population
+    population: 12500000
+    beds per 1000: 2.4 # Assume same in both regions
+    population with community spread: 0.06 # As a fraction of total population
   # Probability of an individual moving from one locality to another per day
   between locality mobility rate: 0.0001
   between region mobility rate: 0.0001
+
+
+

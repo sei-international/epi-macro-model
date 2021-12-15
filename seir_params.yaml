@@ -1,32 +1,151 @@
 ###############################################################
 #
-# These are parameters for a matrix model implementation of
+# These are parameters for a discrete time model implementation of
 # a susceptible-exposed-infective-recovered (SEIR)
-# epidemiological model. These parameters are for COVID-19.
+# epidemiological model. These parameters are for variants of 
+# COVID-19.
 #
 ###############################################################
+- name: Baseline variant
 
-R0: 2.25
-k factor: 0.1
-unobserved fraction of cases: 0.87
-population at risk fraction: 0.05 # As a fraction of total population
+  start date: {year: 2020, month: 1, day: 1}
 
-case fatality rate:
-    average: 0.057
-    at risk: 0.070
-    overflow hospitalized mortality rate factor: 2
+  R0: 
+    1st infection: 2.25
+    Reinfection: 1.9
+  k factor: 0.1
+  unobserved fraction of cases: 
+        first infection: 0.47
+        reinfection: 0.47
+  population at risk fraction: 0.05 # As a fraction of total population
+  
+  case fatality rate among 1st infections:
+      average: 0.011
+      at risk: 0.073
 
-fraction of observed cases requiring hospitalization:
-    average: 0.38
-    at risk: 0.60
+      overflow hospitalized mortality rate factor: 2
 
-matrix-params:
-    prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
-    prob recover or death given infected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
-                                           0.08,0.08,0.09,0.08,0.09,0.1,0.11,
-                                           0.12,0.13,0.15,0.18,0.22,0.29,0.06,
-                                           0.07,0.07,0.08,0.08,0.09,0.1,0.11]
-    recovery rate for at risk as fraction of not at risk: 0.75
+  fraction of observed cases among 1st infections requiring hospitalization:
+      average: 0.031
+      at risk: 0.108
 
-statistical-model:
-    coeff of variation of infected where spreading: 0.6
+
+  case fatality rate among reinfections:
+      average: 0.008
+      at risk: 0.033
+
+  fraction of observed reinfection cases requiring hospitalization:
+      average: 0.021
+      at risk: 0.060
+
+  transitioning rates:
+      prob infected given exposed: [0,0.025,0.1,0.2,0.3,0.4,0.4,0.4,0.4,0.4,0.4,0.4]
+      prob recover or death given infected: [0,0,0,0,0.05,0.05,0.06,0.06,0.06,0.07,0.07,
+                                             0.08,0.08,0.09,0.08,0.09,0.1,0.11,
+                                             0.12,0.13,0.15,0.18,0.22,0.29,0.06,
+                                             0.07,0.07,0.08,0.08,0.09,0.1,0.11]
+      prob reinfected given reexposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
+      prob recovery or death given reinfected: [0.00,0.00,0.13,0.13,0.19,0.19,0.16,0.16,
+                                                0.16,0.16,0.16,0.19,0.19,0.19,0.19,0.19,
+                                                0.30,0.30,0.30,0.30,0.30]
+      recovery rate for at risk as fraction of not at risk: 0.75
+      recovery rate for at risk as fraction of not at risk among reinfected: 1.0
+    
+  protective efficacy of previous infection or inocculation: # points of interpolation given by month since infection/inocculation
+                                                        - [{month: 0}, 0.9]
+                                                        - [{month: 4}, 0.9] #
+
+  statistical-model:
+      coeff of variation of infected where spreading: 0.6
+
+  initial:
+    infected fraction:
+      Ports of entry: 0.0001 # As a fraction of total population
+      Other provinces: 0.00005
+
+  proportion of global infection rate:
+      - [{year: 2020, month: 1, day: 1}, 1]
+      - [{year: 2020, month: 3, day: 20}, 1]
+      - [{year: 2020, month: 4, day: 7}, 1]
+      - [{year: 2020, month: 5, day: 19}, 1]
+      - [{year: 2020, month: 7, day: 30}, 1]
+      - [{year: 2020, month: 10, day: 6}, 1]
+      - [{year: 2020, month: 11, day: 16}, 1]
+      - [{year: 2021, month: 4, day: 11}, 0.992]
+      - [{year: 2021, month: 5, day: 2}, 0.975]
+      - [{year: 2021, month: 5, day: 30}, 0.862]
+      - [{year: 2021, month: 6, day: 27}, 0.533]
+      - [{year: 2021, month: 7, day: 18}, 0.294]
+      - [{year: 2021, month: 8, day: 01}, 0.179]
+      - [{year: 2021, month: 9, day: 29}, 0.08]
+      - [{year: 2021, month: 10, day: 10}, 0.042]
+
+- name: Delta variant
+
+  start date: {year: 2021, month: 3, day: 1}
+
+  R0:     
+    1st infection: 6.4
+    Reinfection: 1.9
+  k factor: 0.1
+  unobserved fraction of cases: 
+        first infection: 0.47
+        reinfection: 0.47
+  population at risk fraction: 0.05 # As a fraction of total population
+
+  case fatality rate among 1st infections:
+      average: 0.010
+      at risk: 0.069
+      overflow hospitalized mortality rate factor: 2
+
+  fraction of observed cases among 1st infections requiring hospitalization:
+      average: 0.030
+      at risk: 0.103
+
+  case fatality rate among reinfections:
+      average: 0.008
+      at risk: 0.033
+
+  fraction of observed reinfection cases requiring hospitalization:
+      average: 0.021
+      at risk: 0.060
+
+  transitioning rates:
+      prob infected given exposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
+      prob recover or death given infected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
+                                      0.05,0.05,0.05,0.20,0.20,0.20,0.20,0.20,
+                                      0.13,0.13,0.13,0.13,0.13]
+      prob reinfected given reexposed: [0,0.11,0.22,0.29,0.34,0.38,0.41,0.45,0.51,0.61]
+      prob recovery or death given reinfected: [0.00,0.00,0.00,0.00,0.00,0.00,0.06,0.06,
+                                                0.05,0.05,0.05,0.20,0.20,0.20,0.20,0.20,
+                                                0.13,0.13,0.13,0.13,0.13]
+      recovery rate for at risk as fraction of not at risk: 0.75
+      recovery rate for at risk as fraction of not at risk among reinfected: 1.0
+
+  protective efficacy of previous infection or inocculation: # points of interpolation given by month since infection/inocculation
+                                                    - [{month: 0}, 0.93]
+                                                    - [{month: 4}, 0.53]
+  statistical-model:
+      coeff of variation of infected where spreading: 0.6
+
+  initial: # at variant's start date
+    infected fraction:
+      Ports of entry: 0.0001 # As a fraction of total population
+      Other provinces: 0
+
+  proportion of global infection rate:
+      - [{year: 2020, month: 1, day: 1}, 0.0000]
+      - [{year: 2020, month: 3, day: 20}, 0.0000]
+      - [{year: 2020, month: 4, day: 7}, 0.0000]
+      - [{year: 2020, month: 5, day: 19}, 0.0000]
+      - [{year: 2020, month: 7, day: 30}, 0.0000]
+      - [{year: 2020, month: 10, day: 6}, 0.0000]
+      - [{year: 2020, month: 11, day: 16}, 0.0000]
+      - [{year: 2021, month: 4, day: 11}, 0.008]
+      - [{year: 2021, month: 5, day: 2}, 0.025]
+      - [{year: 2021, month: 5, day: 30}, 0.138]
+      - [{year: 2021, month: 6, day: 27}, 0.467]
+      - [{year: 2021, month: 7, day: 18}, 0.706]
+      - [{year: 2021, month: 8, day: 01}, 0.821]
+      - [{year: 2021, month: 9, day: 29}, 0.92]
+      - [{year: 2021, month: 10, day: 10}, 0.958]
