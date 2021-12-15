@@ -10,8 +10,8 @@ This is the Python source code for the Stockholm Environment Institute (SEI) Epi
      * Testing and tracing 
      * Vaccination roll-out
   * Modeling spread of a contagious disease like COVID-19 in a Susceptible-Exposed-Infectious-Removed (SEIR) model, including:
-     * mutliple strains
-     * waning immunity and reinfections
+     * Mutliple strains
+     * Waning immunity and reinfections
   * Resolution of regional variations such as rural and urban settings, or destinations that attract, or are seldom affected by, international travel.
 
 The script can be run using any Python 3.x. There is also a 64-bit Windows executable available.
