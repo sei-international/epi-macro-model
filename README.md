@@ -1,4 +1,4 @@
-# Epidemiological-Macroeconomic Model
+# SEI Epidemiological-Macroeconomic Model
 This is the Python source code for the Stockholm Environment Institute (SEI) Epidemiological-Macroeconomic Model, a software designed to help national and regional authorities generate scenarios that incorporate both the economic ramifications of the pandemic and the measures undertaken to contain its spread. The software allows planners to explore likely future scenarios that take into account how the pandemic and related policy measures may affect the national economy and the global economic environment.
 
 **Key features include:**
