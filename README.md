@@ -18,7 +18,7 @@ The script can be run using any Python 3.x. There is also a 64-bit Windows execu
 
 ## Getting started with the Epidemiologic-Macroeconomic Model
 
-For instructions on using the Epidemiologic-Macroeconomic Model, see the [documentation](https://github.com/sei-international/epi-macro-model/blob/main/index.html). For the technical documentation of the version published on Mar 9, 2021 click [here].
+For instructions on using the Epidemiologic-Macroeconomic Model, see the documentation (<object data="{{ https://github.com/ccwagner/epi-macro-model-documentation/blob/main/epi-macro-model-documentation.pdf }}" width="1000" height="1000" type='application/pdf'/>). For the technical documentation of the version published on Mar 9, 2021 click [here].
 
 ## For more information
 
