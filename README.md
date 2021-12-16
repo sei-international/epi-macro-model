@@ -22,7 +22,7 @@ For instructions on using the Epidemiologic-Macroeconomic Model, see the [manual
 
 ## For more information
 
-The "Epi-Macro Model" team includes several SEI staff:[Charlotte Wagner](mailto:charlotte.wagner@sei.org), [Eric Kemp-Benedict](mailto:eric.kemp-benedict@sei.org) and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
+The "Epi-Macro Model" team includes several SEI staff: [Charlotte Wagner](mailto:charlotte.wagner@sei.org), [Eric Kemp-Benedict](mailto:eric.kemp-benedict@sei.org) and Anisha Nazareth. Please feel free to contact any of us for more information or if you have questions.
 
 ## Funding 
 The Epidemiologic-Macroeconomic Model is a project of the Stockholm Environment Institute (SEI). Key contributors include Charlotte Wagner, Eric Kemp-Benedict, and Anisha Nazareth. The project was made possible by an SEI Rapid Response grant funded by the Swedish International Development Cooperation Agency (Sida).
