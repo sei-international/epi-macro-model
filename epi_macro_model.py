@@ -67,7 +67,7 @@ if model != 'epi':
         # Calculate the "coverage", or how much of the year is represented
         VA_ann_cov = VA_by_year.groupby('year')['year'].agg(size)
         VA_annual.insert(0, 'coverage', round(100*minimum(VA_ann_cov/ts_per_year,1))/100)
-        VA_annual.to_csv('output_value_added_annual.csv', index=False)
+        VA_annual.to_csv('output_value_added_annual.csv', index=True)
 
         VA['GDP'] = VA.sum(axis=1)
         VA.insert(0, 'date', macro_dts)
