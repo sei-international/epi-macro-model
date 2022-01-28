@@ -60,10 +60,11 @@ if model != 'epi':
         
         ts_per_year = 365/((macro_dts[1] - macro_dts[0]).days)
         
-        VA_by_year = VA
+        VA_by_year = VA.copy()
         VA_by_year.insert(0, 'year', [x.year for x in macro_dts])
         VA_annual = VA_by_year.groupby('year').agg(sum)
         VA_annual['GDP'] = VA_annual.sum(axis = 1)
+        # Calculate the "coverage", or how much of the year is represented
         VA_ann_cov = VA_by_year.groupby('year')['year'].agg(size)
         VA_annual.insert(0, 'coverage', round(100*minimum(VA_ann_cov/ts_per_year,1))/100)
         VA_annual.to_csv('output_value_added_annual.csv', index=False)
