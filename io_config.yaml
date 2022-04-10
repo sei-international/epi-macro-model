@@ -5,7 +5,7 @@
 ###############################################################
 days-per-time-step: 7 # week: 7; month: 30.42; quarter: 91.26
 
-target-growth-rate: 0.035 # Annual target growth rate
+target-growth-rate: 0.025 # Annual target growth rate
 
 input-file:
     name: input_output_data.csv
